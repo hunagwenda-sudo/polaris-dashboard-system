@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS sys_user (
     level VARCHAR(10) DEFAULT 'K1',
     target_dgmv DECIMAL(14,2) DEFAULT 0 COMMENT '个人季度目标DGMV',
     status VARCHAR(16) DEFAULT 'active',
+    password_changed TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否已修改密码 0=未修改 1=已修改',
     birthday DATE COMMENT '生日',
     hire_date DATE COMMENT '入职日期',
     deleted TINYINT DEFAULT 0,
