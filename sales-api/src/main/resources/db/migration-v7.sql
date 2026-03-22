@@ -4,7 +4,7 @@ USE sales_hub;
 SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS
     WHERE TABLE_SCHEMA = 'sales_hub' AND TABLE_NAME = 'sys_user' AND COLUMN_NAME = 'required_platforms');
 SET @sql = IF(@col_exists = 0,
-    'ALTER TABLE sys_user ADD COLUMN required_platforms VARCHAR(200) DEFAULT NULL COMMENT ''需要每日填报的平台code，逗号分隔，如DY,XHS,KS'' AFTER remind_enabled',
+    'ALTER TABLE sys_user ADD COLUMN required_platforms VARCHAR(200) DEFAULT NULL COMMENT ''需要每日填报的平台code，逗号分隔''',
     'SELECT 1');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;

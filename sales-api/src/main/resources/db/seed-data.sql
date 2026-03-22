@@ -5,8 +5,11 @@ USE sales_hub;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+TRUNCATE TABLE biz_quarterly_snapshot;
 TRUNCATE TABLE biz_service_record;
 TRUNCATE TABLE biz_daily_record;
+TRUNCATE TABLE sys_user_platform;
+TRUNCATE TABLE sys_platform_account;
 TRUNCATE TABLE sys_audit_log;
 TRUNCATE TABLE sys_role_permission;
 DELETE FROM sys_user;
