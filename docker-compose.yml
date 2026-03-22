@@ -39,6 +39,7 @@ services:
     build: ./sales-api
     restart: always
     environment:
+      JAVA_OPTS: "-Xms256m -Xmx512m"
       DB_USERNAME: root
       DB_PASSWORD: ${DB_PASSWORD:-changeme}
       JWT_SECRET: ${JWT_SECRET:-SalesHubJwtSecretKey2025ForTokenSigningMustBeLongEnough!!}

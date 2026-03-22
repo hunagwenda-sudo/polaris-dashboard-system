@@ -12,4 +12,4 @@ WORKDIR /app
 COPY --from=build /build/target/*.jar app.jar
 RUN mkdir -p /app/uploads
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=prod"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar --spring.profiles.active=prod"]
