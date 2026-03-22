@@ -50,6 +50,23 @@
             <input v-model="form.hireDate" type="date" :max="today" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-gray-300 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30" />
           </div>
         </div>
+        <div>
+          <label class="text-[10px] text-trust-300 font-sans block mb-1.5">渠道账号分配</label>
+          <div class="space-y-2 max-h-[200px] overflow-y-auto">
+            <div v-for="p in platforms" :key="p.code">
+              <p class="text-[10px] font-semibold text-trust-300 font-sans mb-1">{{ p.label }}</p>
+              <div class="flex flex-wrap gap-1.5 ml-2">
+                <label v-for="acc in (accountsByPlatform[p.code] || [])" :key="acc.id"
+                  class="flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-sans cursor-pointer transition-colors duration-150"
+                  :class="form.assignedAccountIds.includes(acc.id) ? 'bg-brand/[0.15] text-brand-light border border-brand/[0.3]' : 'bg-white/[0.03] text-gray-400 border border-white/[0.06] hover:border-white/[0.12]'">
+                  <input type="checkbox" :value="acc.id" v-model="form.assignedAccountIds" class="hidden" />
+                  {{ acc.accountName }}
+                </label>
+                <span v-if="!(accountsByPlatform[p.code] || []).length" class="text-[9px] text-trust-400 font-sans">暂无账号</span>
+              </div>
+            </div>
+          </div>
+        </div>
         <p v-if="formError" class="text-red-400 text-[11px]">{{ formError }}</p>
         <div class="flex gap-3 justify-end">
           <button @click="showCreate = false" class="px-4 py-2 rounded-lg text-[12px] text-trust-300 hover:text-white cursor-pointer font-sans">取消</button>
@@ -60,56 +77,74 @@
 
     <!-- Edit modal -->
     <div v-if="showEdit" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showEdit = false">
-      <div class="bg-trust-800 border border-white/[0.08] rounded-2xl p-6 w-[420px] space-y-4">
+      <div class="bg-trust-800 border border-white/[0.08] rounded-2xl p-6 w-[560px] max-h-[90vh] overflow-y-auto space-y-4">
         <h3 class="text-[14px] font-semibold text-white font-sans">编辑人员</h3>
-        <div>
-          <label class="text-[10px] text-trust-300 font-sans block mb-1">姓名</label>
-          <input v-model="editForm.name" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white placeholder-trust-400 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30" />
-        </div>
-        <div>
-          <label class="text-[10px] text-trust-300 font-sans block mb-1">手机号</label>
-          <input v-model="editForm.phone" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30" />
-        </div>
-        <div>
-          <label class="text-[10px] text-trust-300 font-sans block mb-1">角色</label>
-          <select v-model="editForm.role" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-gray-300 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer">
-            <option value="sales">运营</option><option value="partner">合伙人</option><option value="admin">管理员</option><option value="service">客服</option>
-          </select>
-        </div>
-        <div>
-          <label class="text-[10px] text-trust-300 font-sans block mb-1">所属团队</label>
-          <select v-model="editForm.teamId" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-gray-300 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer">
-            <option :value="null">无团队</option>
-            <option v-for="t in teams" :key="t.id" :value="t.id">{{ t.name }}</option>
-          </select>
-        </div>
-        <div>
-          <label class="text-[10px] text-trust-300 font-sans block mb-1">职级</label>
-          <select v-model="editForm.level" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-gray-300 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer">
-            <option v-for="lv in levelOptions" :key="lv" :value="lv">{{ lv }}</option>
-          </select>
-        </div>
+        <!-- 基本信息 2列 -->
         <div class="grid grid-cols-2 gap-3">
           <div>
+            <label class="text-[10px] text-trust-300 font-sans block mb-1">姓名</label>
+            <input v-model="editForm.name" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-1.5 text-[12px] text-white font-sans focus:outline-none focus:ring-2 focus:ring-brand/30" />
+          </div>
+          <div>
+            <label class="text-[10px] text-trust-300 font-sans block mb-1">手机号</label>
+            <input v-model="editForm.phone" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-1.5 text-[12px] text-white font-mono focus:outline-none focus:ring-2 focus:ring-brand/30" />
+          </div>
+          <div>
+            <label class="text-[10px] text-trust-300 font-sans block mb-1">角色</label>
+            <select v-model="editForm.role" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-1.5 text-[12px] text-gray-300 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer">
+              <option value="sales">运营</option><option value="partner">合伙人</option><option value="admin">管理员</option><option value="service">客服</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] text-trust-300 font-sans block mb-1">所属团队</label>
+            <select v-model="editForm.teamId" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-1.5 text-[12px] text-gray-300 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer">
+              <option :value="null">无团队</option>
+              <option v-for="t in teams" :key="t.id" :value="t.id">{{ t.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] text-trust-300 font-sans block mb-1">职级</label>
+            <select v-model="editForm.level" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-1.5 text-[12px] text-gray-300 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer">
+              <option v-for="lv in levelOptions" :key="lv" :value="lv">{{ lv }}</option>
+            </select>
+          </div>
+          <div class="flex items-end pb-0.5">
+            <div class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+              <span class="text-[11px] text-white font-sans">填报提醒</span>
+              <button type="button" @click="editForm.remindEnabled = editForm.remindEnabled ? 0 : 1"
+                :class="['relative inline-flex items-center w-9 h-5 rounded-full transition-colors duration-200 cursor-pointer shrink-0 overflow-hidden',
+                  editForm.remindEnabled ? 'bg-brand' : 'bg-white/[0.15]']">
+                <span :class="['absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200',
+                  editForm.remindEnabled ? 'translate-x-4' : 'translate-x-0.5']" />
+              </button>
+            </div>
+          </div>
+          <div>
             <label class="text-[10px] text-trust-300 font-sans block mb-1">生日</label>
-            <input v-model="editForm.birthday" type="date" :max="today" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-gray-300 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30" />
+            <input v-model="editForm.birthday" type="date" :max="today" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-1.5 text-[12px] text-gray-300 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30" />
           </div>
           <div>
             <label class="text-[10px] text-trust-300 font-sans block mb-1">入职日期</label>
-            <input v-model="editForm.hireDate" type="date" :max="today" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-gray-300 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30" />
+            <input v-model="editForm.hireDate" type="date" :max="today" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-1.5 text-[12px] text-gray-300 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30" />
           </div>
         </div>
-        <div class="flex items-center justify-between px-4 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-          <div>
-            <p class="text-[12px] text-white font-sans">填报提醒</p>
-            <p class="text-[10px] text-trust-300 font-sans mt-0.5">关闭后未填日报不会收到飞书提醒</p>
+        <!-- 渠道账号分配 -->
+        <div>
+          <label class="text-[10px] text-trust-300 font-sans block mb-1.5">渠道账号分配</label>
+          <div class="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3 space-y-2 max-h-[180px] overflow-y-auto">
+            <div v-for="p in platforms" :key="p.code" class="flex items-start gap-2">
+              <span class="text-[10px] font-semibold text-trust-300 font-sans w-14 shrink-0 pt-0.5">{{ p.label }}</span>
+              <div class="flex flex-wrap gap-1.5">
+                <label v-for="acc in (accountsByPlatform[p.code] || [])" :key="acc.id"
+                  class="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-sans cursor-pointer transition-colors duration-150"
+                  :class="editForm.assignedAccountIds.includes(acc.id) ? 'bg-brand/[0.15] text-brand-light border border-brand/[0.3]' : 'bg-white/[0.03] text-gray-400 border border-white/[0.06] hover:border-white/[0.12]'">
+                  <input type="checkbox" :value="acc.id" v-model="editForm.assignedAccountIds" class="hidden" />
+                  {{ acc.accountName }}
+                </label>
+                <span v-if="!(accountsByPlatform[p.code] || []).length" class="text-[9px] text-trust-400 font-sans">暂无账号</span>
+              </div>
+            </div>
           </div>
-          <button type="button" @click="editForm.remindEnabled = editForm.remindEnabled ? 0 : 1"
-            :class="['relative inline-flex items-center w-11 h-6 rounded-full transition-colors duration-200 cursor-pointer shrink-0 overflow-hidden',
-              editForm.remindEnabled ? 'bg-brand' : 'bg-white/[0.15]']">
-            <span :class="['absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200',
-              editForm.remindEnabled ? 'translate-x-6' : 'translate-x-1']" />
-          </button>
         </div>
         <!-- 操作区 -->
         <div class="flex items-center gap-2 pt-1 border-t border-white/[0.06]">
@@ -262,6 +297,8 @@ const roleBadge = {
 }
 const members = ref([])
 const teams = ref([])
+const platforms = ref([])
+const allAccounts = ref([])
 const total = ref(0)
 const search = ref('')
 const levelOptions = ref(['K1'])
@@ -274,16 +311,25 @@ const teamMap = computed(() => {
   return map
 })
 
+const accountsByPlatform = computed(() => {
+  const map = {}
+  for (const acc of allAccounts.value) {
+    if (!map[acc.platformCode]) map[acc.platformCode] = []
+    map[acc.platformCode].push(acc)
+  }
+  return map
+})
+
 // Create
 const showCreate = ref(false)
 const formError = ref('')
-const form = reactive({ username: '', name: '', phone: '', role: 'sales', teamId: null, birthday: '', hireDate: '' })
+const form = reactive({ username: '', name: '', phone: '', role: 'sales', teamId: null, birthday: '', hireDate: '', assignedAccountIds: [] })
 
 // Edit
 const showEdit = ref(false)
 const editError = ref('')
 const editId = ref(null)
-const editForm = reactive({ name: '', phone: '', role: 'sales', teamId: null, level: 'K1', birthday: '', hireDate: '', remindEnabled: 1, status: 'active' })
+const editForm = reactive({ name: '', phone: '', role: 'sales', teamId: null, level: 'K1', birthday: '', hireDate: '', remindEnabled: 1, status: 'active', assignedAccountIds: [] })
 
 let debounceTimer = null
 
@@ -296,6 +342,20 @@ async function fetchTeams() {
   try {
     const res = await api.get('/teams')
     teams.value = (res.data || []).map(t => ({ id: t.id || t.teamId, name: t.name || t.teamName }))
+  } catch { /* empty */ }
+}
+
+async function fetchPlatforms() {
+  try {
+    const res = await api.get('/dict/platform')
+    platforms.value = (res.data || []).sort((a, b) => a.sort - b.sort)
+  } catch { /* empty */ }
+}
+
+async function fetchAccounts() {
+  try {
+    const res = await api.get('/platform-accounts')
+    allAccounts.value = res.data || []
   } catch { /* empty */ }
 }
 
@@ -333,7 +393,7 @@ function hireDays(hireDate) {
 }
 
 function openCreate() {
-  Object.assign(form, { username: '', name: '', phone: '', role: 'sales', teamId: null, birthday: '', hireDate: '' })
+  Object.assign(form, { username: '', name: '', phone: '', role: 'sales', teamId: null, birthday: '', hireDate: '', assignedAccountIds: [] })
   formError.value = ''
   showCreate.value = true
 }
@@ -341,7 +401,13 @@ function openCreate() {
 async function createUser() {
   formError.value = ''
   try {
-    await api.post('/users', { ...form, birthday: form.birthday || null, hireDate: form.hireDate || null })
+    const { assignedAccountIds, ...rest } = form
+    const payload = { ...rest, birthday: form.birthday || null, hireDate: form.hireDate || null }
+    const res = await api.post('/users', payload)
+    // 保存渠道分配
+    if (assignedAccountIds.length > 0 && res.data?.id) {
+      await api.put(`/users/${res.data.id}/platforms`, { accountIds: assignedAccountIds })
+    }
     showCreate.value = false
     fetchMembers()
   } catch (e) {
@@ -349,7 +415,7 @@ async function createUser() {
   }
 }
 
-function openEdit(m) {
+async function openEdit(m) {
   editId.value = m.id
   editForm.name = m.name
   editForm.phone = m.phone || ''
@@ -360,6 +426,12 @@ function openEdit(m) {
   editForm.hireDate = m.hireDate || ''
   editForm.remindEnabled = m.remindEnabled !== 0 ? 1 : 0
   editForm.status = m.status || 'active'
+  // 加载用户渠道分配
+  editForm.assignedAccountIds = []
+  try {
+    const res = await api.get(`/users/${m.id}/platforms`)
+    editForm.assignedAccountIds = (res.data || []).map(a => a.accountId)
+  } catch { /* ignore */ }
   editError.value = ''
   showEdit.value = true
 }
@@ -367,7 +439,11 @@ function openEdit(m) {
 async function updateUser() {
   editError.value = ''
   try {
-    await api.put(`/users/${editId.value}`, { ...editForm, birthday: editForm.birthday || null, hireDate: editForm.hireDate || null })
+    const { assignedAccountIds, ...rest } = editForm
+    const payload = { ...rest, birthday: editForm.birthday || null, hireDate: editForm.hireDate || null }
+    await api.put(`/users/${editId.value}`, payload)
+    // 保存渠道分配
+    await api.put(`/users/${editId.value}/platforms`, { accountIds: assignedAccountIds })
     showEdit.value = false
     fetchMembers()
   } catch (e) {
@@ -397,5 +473,5 @@ async function resetPasswordInEdit() {
   }
 }
 
-onMounted(() => { fetchTeams(); fetchLevels(); fetchMembers() })
+onMounted(() => { fetchTeams(); fetchLevels(); fetchPlatforms(); fetchAccounts(); fetchMembers() })
 </script>

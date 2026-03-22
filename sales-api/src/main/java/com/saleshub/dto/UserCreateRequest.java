@@ -17,4 +17,5 @@ public class UserCreateRequest {
     private String level;
     private LocalDate birthday;
     private LocalDate hireDate;
+    private String requiredPlatforms;
 }

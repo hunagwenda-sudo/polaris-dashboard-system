@@ -67,6 +67,7 @@ public class UserServiceImpl implements UserService {
         user.setLevel(request.getLevel() != null ? request.getLevel() : "K1");
         user.setBirthday(request.getBirthday());
         user.setHireDate(request.getHireDate());
+        user.setRequiredPlatforms(request.getRequiredPlatforms());
         user.setPasswordChanged(false);
         user.setStatus("active");
         user.setCreatedAt(LocalDateTime.now());
@@ -97,6 +98,7 @@ public class UserServiceImpl implements UserService {
         if (request.getBirthday() != null) user.setBirthday(request.getBirthday());
         if (request.getHireDate() != null) user.setHireDate(request.getHireDate());
         if (request.getRemindEnabled() != null) user.setRemindEnabled(request.getRemindEnabled());
+        if (request.getRequiredPlatforms() != null) user.setRequiredPlatforms(request.getRequiredPlatforms());
         user.setUpdatedAt(LocalDateTime.now());
         userMapper.updateById(user);
         user.setPassword(null);

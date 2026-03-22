@@ -52,17 +52,20 @@ public class GroupServiceImpl implements GroupService {
             map.put("id", g.getId());
             map.put("name", g.getName());
             map.put("leaderId", g.getLeaderId());
-            map.put("targetDgmv", g.getTargetDgmv());
 
             List<SysUser> members = groupUsers.getOrDefault(g.getId(), List.of());
             map.put("memberCount", (long) members.size());
+
+            // 小组目标 = 成员个人季度目标之和
+            BigDecimal target = members.stream()
+                .map(m -> m.getTargetDgmv() != null ? m.getTargetDgmv() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            map.put("targetDgmv", target);
 
             BigDecimal totalDgmv = members.stream()
                 .map(m -> userDgmvMap.getOrDefault(m.getId(), BigDecimal.ZERO))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             map.put("quarterDgmv", totalDgmv);
-
-            BigDecimal target = g.getTargetDgmv() != null ? g.getTargetDgmv() : BigDecimal.ZERO;
             BigDecimal rate = target.compareTo(BigDecimal.ZERO) > 0
                 ? totalDgmv.multiply(BigDecimal.valueOf(100)).divide(target, 1, java.math.RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;

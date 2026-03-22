@@ -3,6 +3,7 @@ package com.saleshub.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.saleshub.entity.*;
 import com.saleshub.mapper.*;
+import com.saleshub.mapper.BizQuarterlySnapshotMapper;
 import com.saleshub.service.DashboardService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,6 +30,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final SysUserMapper userMapper;
     private final SysTeamMapper teamMapper;
     private final SysDictMapper dictMapper;
+    private final BizQuarterlySnapshotMapper snapshotMapper;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -516,6 +518,95 @@ public class DashboardServiceImpl implements DashboardService {
             var keys = redisTemplate.keys(CACHE_PREFIX + "*");
             if (keys != null && !keys.isEmpty()) redisTemplate.delete(keys);
         } catch (Exception e) { log.warn("Cache eviction failed: {}", e.getMessage()); }
+    }
+
+    @Override
+    public List<String> getAvailableQuarters() {
+        List<BizQuarterlySnapshot> all = snapshotMapper.selectList(
+            new LambdaQueryWrapper<BizQuarterlySnapshot>()
+                .select(BizQuarterlySnapshot::getQuarter)
+                .groupBy(BizQuarterlySnapshot::getQuarter)
+                .orderByDesc(BizQuarterlySnapshot::getQuarter)
+        );
+        return all.stream().map(BizQuarterlySnapshot::getQuarter).distinct().toList();
+    }
+
+    @Override
+    public List<BizQuarterlySnapshot> getQuarterlySnapshots(String quarter) {
+        return snapshotMapper.selectList(
+            new LambdaQueryWrapper<BizQuarterlySnapshot>()
+                .eq(BizQuarterlySnapshot::getQuarter, quarter)
+                .orderByDesc(BizQuarterlySnapshot::getTotalDgmv)
+        );
+    }
+
+    @Override
+    public int generateQuarterlySnapshot(String quarter) {
+        // 解析季度 → 日期范围
+        // quarter 格式: 2026-Q1
+        String[] parts = quarter.split("-Q");
+        if (parts.length != 2) throw new com.saleshub.common.BusinessException("季度格式错误，应为 yyyy-Qn");
+        int year = Integer.parseInt(parts[0]);
+        int q = Integer.parseInt(parts[1]);
+        if (q < 1 || q > 4) throw new com.saleshub.common.BusinessException("季度范围 1-4");
+        int startMonth = (q - 1) * 3 + 1;
+        LocalDate qStart = LocalDate.of(year, startMonth, 1);
+        LocalDate qEnd = qStart.plusMonths(3).minusDays(1);
+
+        // 不能为未来季度生成
+        if (qStart.isAfter(LocalDate.now())) throw new com.saleshub.common.BusinessException("不能为未来季度生成快照");
+
+        // 检查是否已有快照
+        Long existing = snapshotMapper.selectCount(
+            new LambdaQueryWrapper<BizQuarterlySnapshot>().eq(BizQuarterlySnapshot::getQuarter, quarter)
+        );
+        if (existing > 0) throw new com.saleshub.common.BusinessException("该季度快照已存在，共 " + existing + " 条");
+
+        // 所有运营（含已离职的，因为历史数据需要）
+        List<SysUser> salesUsers = userMapper.selectList(
+            new LambdaQueryWrapper<SysUser>().eq(SysUser::getRole, "sales")
+        );
+        if (salesUsers.isEmpty()) return 0;
+
+        // 团队名称
+        List<SysTeam> teams = teamMapper.selectList(null);
+        Map<Long, String> teamNameMap = teams.stream()
+            .collect(Collectors.toMap(SysTeam::getId, SysTeam::getName, (a, b) -> a));
+
+        // 该季度业绩
+        Set<Long> userIds = salesUsers.stream().map(SysUser::getId).collect(Collectors.toSet());
+        List<BizDailyRecord> records = recordMapper.selectList(
+            new LambdaQueryWrapper<BizDailyRecord>()
+                .in(BizDailyRecord::getUserId, userIds)
+                .ge(BizDailyRecord::getRecordDate, qStart)
+                .le(BizDailyRecord::getRecordDate, qEnd)
+        );
+        Map<Long, BigDecimal> dgmvMap = records.stream()
+            .collect(Collectors.groupingBy(BizDailyRecord::getUserId,
+                Collectors.reducing(BigDecimal.ZERO, BizDailyRecord::getDgmv, BigDecimal::add)));
+
+        List<Map.Entry<String, BigDecimal>> thresholds = loadSortedThresholds();
+        List<String> levelNames = extractLevelNames(thresholds);
+
+        int count = 0;
+        for (SysUser user : salesUsers) {
+            BigDecimal totalDgmv = dgmvMap.getOrDefault(user.getId(), BigDecimal.ZERO);
+            String estimated = estimateLevelFromThresholds(totalDgmv, thresholds, levelNames);
+
+            BizQuarterlySnapshot snapshot = new BizQuarterlySnapshot();
+            snapshot.setUserId(user.getId());
+            snapshot.setUserName(user.getName());
+            snapshot.setTeamId(user.getTeamId());
+            snapshot.setTeamName(user.getTeamId() != null ? teamNameMap.get(user.getTeamId()) : null);
+            snapshot.setQuarter(quarter);
+            snapshot.setLevel(user.getLevel()); // 当前职级（补录时可能已被重置）
+            snapshot.setEstimatedLevel(estimated);
+            snapshot.setTotalDgmv(totalDgmv);
+            snapshot.setCreatedAt(java.time.LocalDateTime.now());
+            snapshotMapper.insert(snapshot);
+            count++;
+        }
+        return count;
     }
 
     // --- helpers ---

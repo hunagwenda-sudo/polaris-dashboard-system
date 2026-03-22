@@ -16,7 +16,6 @@
       <div class="bg-trust-800 border border-white/[0.08] rounded-2xl p-6 w-[400px] space-y-4">
         <h3 class="text-[14px] font-semibold text-white font-sans">新建团队</h3>
         <input v-model="newTeam.name" placeholder="团队名称" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white placeholder-trust-400 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30" />
-        <input v-model.number="newTeam.targetDgmv" type="number" placeholder="季度目标 DGMV" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30" />
         <div>
           <label class="text-[10px] text-trust-300 font-sans block mb-1">团队负责人（合伙人）</label>
           <select v-model="newTeam.leaderId" class="w-full bg-trust-700 border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white font-sans focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer">
@@ -38,10 +37,6 @@
         <div>
           <label class="text-[10px] text-trust-300 font-sans block mb-1">团队名称</label>
           <input v-model="editForm.name" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white placeholder-trust-400 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30" />
-        </div>
-        <div>
-          <label class="text-[10px] text-trust-300 font-sans block mb-1">季度目标 DGMV (元)</label>
-          <input v-model.number="editForm.targetDgmv" type="number" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30" />
         </div>
         <div>
           <label class="text-[10px] text-trust-300 font-sans block mb-1">团队负责人（合伙人）</label>
@@ -159,10 +154,10 @@ const subtitle = computed(() => {
   return '查看所在团队信息和业绩概览'
 })
 const showCreate = ref(false)
-const newTeam = reactive({ name: '', targetDgmv: '', leaderId: null })
+const newTeam = reactive({ name: '', leaderId: null })
 const showEdit = ref(false)
 const editTeamId = ref(null)
-const editForm = ref({ name: '', targetDgmv: 0, leaderId: null })
+const editForm = ref({ name: '', leaderId: null })
 const editLeaderName = ref('')
 const partners = ref([])
 
@@ -185,9 +180,9 @@ async function fetchTeams() {
 
 async function createTeam() {
   try {
-    await api.post('/teams', { name: newTeam.name, targetDgmv: newTeam.targetDgmv || 0, leaderId: newTeam.leaderId || null })
+    await api.post('/teams', { name: newTeam.name, leaderId: newTeam.leaderId || null })
     showCreate.value = false
-    newTeam.name = ''; newTeam.targetDgmv = ''; newTeam.leaderId = null
+    newTeam.name = ''; newTeam.leaderId = null
     fetchTeams()
   } catch { /* ignore */ }
 }
@@ -197,7 +192,6 @@ async function openEdit(team) {
   editTeamId.value = team.id
   editForm.value = {
     name: team.name,
-    targetDgmv: team.targetDgmv || 0,
     leaderId: team.leaderId ? Number(team.leaderId) : null
   }
   editLeaderName.value = team.leaderName || ''
@@ -207,7 +201,7 @@ async function openEdit(team) {
 
 async function updateTeam() {
   try {
-    await api.put(`/teams/${editTeamId.value}`, { name: editForm.value.name, targetDgmv: editForm.value.targetDgmv, leaderId: editForm.value.leaderId || null })
+    await api.put(`/teams/${editTeamId.value}`, { name: editForm.value.name, leaderId: editForm.value.leaderId || null })
     showEdit.value = false
     fetchTeams()
   } catch { /* ignore */ }

@@ -2,7 +2,7 @@
   <div class="space-y-5 max-w-[1280px] mx-auto">
 
     <!-- 横幅图片区域 -->
-    <div class="relative group rounded-2xl overflow-hidden h-[166px] bg-white/[0.03] border border-white/[0.06]">
+    <div v-if="!leaderboardExpanded" class="relative group rounded-2xl overflow-hidden h-[166px] bg-white/[0.03] border border-white/[0.06]">
       <img v-if="bannerBlobUrl" :src="bannerBlobUrl" alt="banner"
         class="w-full h-full object-cover" />
       <div v-else class="w-full h-full flex items-center justify-center gap-2 text-trust-400">
@@ -34,11 +34,13 @@
       </template>
     </div>
 
-    <AnnouncementBanner />
-    <PersonalStats />
-    <ChannelBreakdown v-if="auth.user?.role === 'admin'" />
-    <Leaderboards />
-    <TeamBattle v-if="auth.user?.role === 'admin'" />
+    <template v-if="!leaderboardExpanded">
+      <AnnouncementBanner />
+      <PersonalStats />
+      <ChannelBreakdown v-if="auth.user?.role === 'admin'" />
+    </template>
+    <Leaderboards ref="leaderboardsRef" />
+    <TeamBattle v-if="auth.user?.role === 'admin' && !leaderboardExpanded" />
   </div>
 </template>
 
@@ -55,6 +57,8 @@ import TeamBattle from '../components/TeamBattle.vue'
 
 const auth = useAuthStore()
 const isAdmin = computed(() => auth.user?.role === 'admin')
+const leaderboardsRef = ref(null)
+const leaderboardExpanded = computed(() => leaderboardsRef.value?.dailyFullscreen ?? false)
 
 const bannerPath = ref('')
 const uploading = ref(false)

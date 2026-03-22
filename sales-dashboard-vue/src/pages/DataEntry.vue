@@ -1,15 +1,15 @@
 <template>
   <div class="max-w-[680px] mx-auto">
     <div class="bg-surface-raised rounded-2xl border border-white/[0.06] overflow-hidden">
-      <div class="px-7 pt-6 pb-4">
-        <h3 class="text-[14px] font-semibold text-white tracking-tight font-sans">每日业绩录入</h3>
-        <p class="text-[11px] text-trust-300 mt-1 font-sans">每个渠道可添加多个账号分别录入</p>
+      <div class="px-4 sm:px-7 pt-5 sm:pt-6 pb-4">
+        <h3 class="text-[14px] font-semibold text-white tracking-tight font-sans">昨日业绩录入</h3>
+        <p class="text-[11px] text-trust-300 mt-1 font-sans">按分配的渠道账号录入数据，填写对应日期的 GMV 和退款金额。每日填写前一日业绩，跨季度时不影响每季度业绩计算。</p>
       </div>
-      <div class="px-7 pb-7 space-y-5">
+      <div class="px-4 sm:px-7 pb-5 sm:pb-7 space-y-5">
         <!-- 日期 -->
         <div>
           <label for="entry-date" class="block text-[10px] font-semibold text-trust-300 uppercase tracking-[0.1em] mb-2 font-sans">日期</label>
-          <input id="entry-date" type="date" v-model="date" :max="today" @change="checkSubmitted"
+          <input id="entry-date" type="date" v-model="date" :max="yesterday" @change="checkSubmitted"
             class="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-2.5 text-[13px] text-white font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/30 transition-colors [color-scheme:dark]" />
         </div>
 
@@ -19,6 +19,15 @@
           <div>
             <p class="text-[12px] font-semibold text-success font-sans">{{ date }} 已完成录入</p>
             <p class="text-[11px] text-trust-300 font-sans mt-0.5">如需修改请联系管理员</p>
+          </div>
+        </div>
+
+        <!-- 未分配提示 -->
+        <div v-else-if="loaded && channels.length === 0" class="flex items-center gap-3 bg-accent/[0.06] border border-accent/[0.12] rounded-xl px-5 py-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div>
+            <p class="text-[12px] font-semibold text-accent font-sans">暂无分配的渠道账号</p>
+            <p class="text-[11px] text-trust-300 font-sans mt-0.5">请联系管理员分配渠道和账号</p>
           </div>
         </div>
 
@@ -32,30 +41,25 @@
                   <span class="w-6 h-6 rounded-md bg-brand/[0.08] border border-brand/[0.1] flex items-center justify-center text-[9px] font-bold text-brand-light font-mono">{{ ch.code }}</span>
                   <span class="text-[12px] font-semibold text-white font-sans">{{ ch.label }}</span>
                 </div>
-                <div class="flex items-center gap-4">
-                  <span class="text-[11px] text-trust-300 font-mono tabular-nums">
-                    DGMV <span class="text-success-light font-semibold">¥{{ channelDGMV(ch) }}</span>
-                  </span>
-                  <button @click="addRow(ch)" class="flex items-center gap-1 text-[10px] text-brand-light hover:text-white transition-colors cursor-pointer font-sans">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    添加账号
-                  </button>
-                </div>
+                <span class="text-[11px] text-trust-300 font-mono tabular-nums">
+                  DGMV <span class="text-success-light font-semibold">¥{{ channelDGMV(ch) }}</span>
+                </span>
               </div>
-              <!-- 账号行 -->
+              <!-- 账号行（固定，不可添加/删除） -->
               <div class="divide-y divide-white/[0.03]">
-                <div v-for="(row, idx) in ch.rows" :key="idx" class="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center px-4 py-2.5">
-                  <input type="text" :placeholder="ch.rows.length > 1 ? '账号备注' : '账号备注（可选）'" v-model="row.accountNote"
-                    class="bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-[12px] text-white placeholder-trust-400 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors" />
-                  <input type="number" placeholder="GMV" v-model="row.gmv"
-                    class="bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors tabular-nums" />
-                  <input type="number" placeholder="退款" v-model="row.refund"
-                    class="bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-danger/30 transition-colors tabular-nums" />
-                  <button v-if="ch.rows.length > 1" @click="removeRow(ch, idx)"
-                    class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-danger/[0.1] text-trust-400 hover:text-danger-light transition-colors cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  </button>
-                  <div v-else class="w-7" />
+                <div v-for="row in ch.rows" :key="row.accountId" class="px-4 py-2.5">
+                  <div class="flex items-center gap-2 mb-2 sm:mb-0 sm:hidden">
+                    <span class="text-[11px] text-gray-300 font-sans truncate">{{ row.accountName }}</span>
+                  </div>
+                  <div class="grid grid-cols-2 sm:grid-cols-[1fr_1fr_1fr] gap-2 items-center">
+                    <div class="hidden sm:flex items-center gap-2">
+                      <span class="text-[11px] text-gray-300 font-sans truncate">{{ row.accountName }}</span>
+                    </div>
+                    <input type="number" placeholder="GMV" v-model="row.gmv"
+                      class="bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors tabular-nums" />
+                    <input type="number" placeholder="退款" v-model="row.refund"
+                      class="bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-danger/30 transition-colors tabular-nums" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -85,20 +89,14 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import api from '../api'
 
 const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Shanghai' })
-const date = ref(today)
+const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('sv-SE', { timeZone: 'Asia/Shanghai' })
+const date = ref(yesterday)
 const channels = reactive([])
 const submitted = ref(false)
 const submitting = ref(false)
 const error = ref('')
 const alreadySubmitted = ref(false)
-
-function addRow(ch) {
-  ch.rows.push({ accountNote: '', gmv: '', refund: '' })
-}
-
-function removeRow(ch, idx) {
-  ch.rows.splice(idx, 1)
-}
+const loaded = ref(false)
 
 function channelDGMV(ch) {
   const v = ch.rows.reduce((s, r) => s + (parseFloat(r.gmv) || 0) - (parseFloat(r.refund) || 0), 0)
@@ -120,15 +118,40 @@ async function checkSubmitted() {
 }
 
 onMounted(async () => {
+  // 获取用户分配的渠道+账号
   try {
-    const res = await api.get('/dict/platform')
-    const platforms = res.data || []
-    channels.push(...platforms.map(p => ({
-      code: p.code,
-      label: p.label,
-      rows: [{ accountNote: '', gmv: '', refund: '' }]
-    })))
+    const [assignRes, platformRes] = await Promise.all([
+      api.get('/records/my-platforms'),
+      api.get('/dict/platform')
+    ])
+    const assignments = assignRes.data || []
+    const platformList = platformRes.data || []
+    const platformMap = {}
+    platformList.forEach(p => { platformMap[p.code] = p.label })
+
+    // 按 platformCode 分组
+    const grouped = {}
+    for (const a of assignments) {
+      if (!grouped[a.platformCode]) {
+        grouped[a.platformCode] = {
+          code: a.platformCode,
+          label: platformMap[a.platformCode] || a.platformCode,
+          rows: []
+        }
+      }
+      grouped[a.platformCode].rows.push({
+        accountId: a.accountId,
+        accountName: a.accountName,
+        gmv: '',
+        refund: ''
+      })
+    }
+    // 按平台排序
+    const sortedCodes = platformList.map(p => p.code)
+    const sorted = sortedCodes.filter(c => grouped[c]).map(c => grouped[c])
+    channels.push(...sorted)
   } catch { /* ignore */ }
+  loaded.value = true
   checkSubmitted()
 })
 
@@ -140,7 +163,8 @@ async function handleSubmit() {
       if (parseFloat(row.gmv) > 0 || parseFloat(row.refund) > 0) {
         items.push({
           platform: ch.code,
-          accountNote: row.accountNote?.trim() || '',
+          accountId: row.accountId,
+          accountNote: row.accountName,
           gmv: parseFloat(row.gmv) || 0,
           refund: parseFloat(row.refund) || 0
         })
@@ -154,7 +178,7 @@ async function handleSubmit() {
     submitted.value = true
     alreadySubmitted.value = true
     setTimeout(() => { submitted.value = false }, 2000)
-    channels.forEach(ch => { ch.rows = [{ accountNote: '', gmv: '', refund: '' }] })
+    channels.forEach(ch => { ch.rows.forEach(r => { r.gmv = ''; r.refund = '' }) })
   } catch (e) {
     error.value = e?.message || '提交失败'
   } finally {

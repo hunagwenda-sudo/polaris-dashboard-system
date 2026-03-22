@@ -33,19 +33,23 @@ public class RecordServiceImpl implements RecordService {
     @Override
     @Transactional
     public void submitRecords(Long userId, RecordSubmitRequest request) {
-        if (request.getRecordDate() != null && request.getRecordDate().isAfter(LocalDate.now())) {
-            throw new BusinessException("日期不能大于今天");
+        if (request.getRecordDate() != null && !request.getRecordDate().isBefore(LocalDate.now())) {
+            throw new BusinessException("只能录入昨天及之前的业绩");
         }
         for (var item : request.getItems()) {
-            // 按 userId + recordDate + platform + accountNote 去重
+            // 按 userId + recordDate + platform + accountId 去重
+            Long accountId = item.getAccountId();
             String note = item.getAccountNote() == null ? "" : item.getAccountNote().trim();
-            Long existCount = recordMapper.selectCount(
-                new LambdaQueryWrapper<BizDailyRecord>()
+            var dupWrapper = new LambdaQueryWrapper<BizDailyRecord>()
                     .eq(BizDailyRecord::getUserId, userId)
                     .eq(BizDailyRecord::getRecordDate, request.getRecordDate())
-                    .eq(BizDailyRecord::getPlatform, item.getPlatform())
-                    .eq(BizDailyRecord::getAccountNote, note)
-            );
+                    .eq(BizDailyRecord::getPlatform, item.getPlatform());
+            if (accountId != null) {
+                dupWrapper.eq(BizDailyRecord::getAccountId, accountId);
+            } else {
+                dupWrapper.eq(BizDailyRecord::getAccountNote, note);
+            }
+            Long existCount = recordMapper.selectCount(dupWrapper);
             if (existCount > 0) {
                 String label = item.getPlatform() + (note.isEmpty() ? "" : "(" + note + ")");
                 throw new BusinessException("渠道 " + label + " 在 " + request.getRecordDate() + " 已提交过");
@@ -54,6 +58,7 @@ public class RecordServiceImpl implements RecordService {
             record.setUserId(userId);
             record.setRecordDate(request.getRecordDate());
             record.setPlatform(item.getPlatform());
+            record.setAccountId(accountId);
             record.setAccountNote(note);
             record.setGmv(item.getGmv());
             record.setRefund(item.getRefund());

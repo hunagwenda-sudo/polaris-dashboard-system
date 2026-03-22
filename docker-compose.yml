@@ -44,6 +44,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-changeme}
       JWT_SECRET: ${JWT_SECRET:-SalesHubJwtSecretKey2025ForTokenSigningMustBeLongEnough!!}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
+      SITE_URL: ${SITE_URL:-http://localhost}
     ports:
       - "8080:8080"
     volumes:

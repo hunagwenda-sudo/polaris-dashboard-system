@@ -109,10 +109,21 @@
             <svg v-bind="iconDefaults" class="w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
-        <p class="text-[11px] text-trust-300 font-sans leading-relaxed">配置飞书机器人 Webhook 地址后，系统将在每天上午 9:00 和 10:00 自动推送前一天未填报客服人员提醒到飞书群。</p>
-        <div>
-          <label for="swh-url" class="block text-[11px] text-trust-300 font-sans mb-1.5">Webhook 地址</label>
-          <input id="swh-url" type="text" v-model="webhookUrl" placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/..." class="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 text-[12px] text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand/30 font-mono" />
+        <p class="text-[11px] text-trust-300 font-sans leading-relaxed">配置飞书机器人 Webhook 地址后，系统将在每天上午 9:00 和 10:00 自动推送前一天未填报客服人员提醒到飞书群。支持添加多个地址，同时推送到多个群。</p>
+        <div class="space-y-2">
+          <label class="block text-[11px] text-trust-300 font-sans">Webhook 地址</label>
+          <div v-for="(_, i) in webhookUrls" :key="i" class="flex items-center gap-2">
+            <input type="text" v-model="webhookUrls[i]" placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/..."
+              class="flex-1 bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 text-[12px] text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand/30 font-mono" />
+            <button @click="webhookUrls.splice(i, 1)" class="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-trust-300 hover:text-danger-light hover:bg-danger/[0.08] transition-colors cursor-pointer shrink-0"
+              :class="{ 'opacity-30 pointer-events-none': webhookUrls.length <= 1 }">
+              <svg v-bind="iconDefaults" class="w-3.5 h-3.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <button @click="webhookUrls.push('')" class="inline-flex items-center gap-1 text-[11px] text-brand-light hover:text-white transition-colors cursor-pointer font-sans">
+            <svg v-bind="iconDefaults" class="w-3.5 h-3.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            添加地址
+          </button>
         </div>
         <div class="flex items-center justify-end gap-3 pt-2">
           <button @click="showWebhookModal = false" class="px-4 py-2 rounded-lg text-[12px] text-trust-300 hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer font-sans">取消</button>
@@ -279,7 +290,7 @@ async function fetchPlatforms() {
 
 // Webhook 配置
 const showWebhookModal = ref(false)
-const webhookUrl = ref('')
+const webhookUrls = ref([''])
 const webhookConfigured = ref(false)
 const savingWebhook = ref(false)
 const webhookMsg = ref('')
@@ -290,16 +301,18 @@ async function openWebhookModal() {
   webhookMsg.value = ''
   try {
     const res = await api.get('/webhook/service_record_unfilled')
-    webhookUrl.value = res.data?.url || ''
-  } catch { webhookUrl.value = '' }
+    const urls = res.data?.urls || []
+    webhookUrls.value = urls.length > 0 ? [...urls] : ['']
+  } catch { webhookUrls.value = [''] }
 }
 
 async function saveWebhook() {
   savingWebhook.value = true
   webhookMsg.value = ''
   try {
-    await api.put('/webhook/service_record_unfilled', { url: webhookUrl.value })
-    webhookConfigured.value = !!webhookUrl.value
+    const cleaned = webhookUrls.value.filter(u => u && u.trim())
+    await api.put('/webhook/service_record_unfilled', { urls: cleaned })
+    webhookConfigured.value = cleaned.length > 0
     webhookMsg.value = '保存成功'
     webhookMsgOk.value = true
     setTimeout(() => { showWebhookModal.value = false }, 800)
@@ -311,7 +324,8 @@ async function fetchWebhookStatus() {
   if (!isAdmin.value) return
   try {
     const res = await api.get('/webhook/service_record_unfilled')
-    webhookConfigured.value = !!(res.data?.url)
+    const urls = res.data?.urls || []
+    webhookConfigured.value = urls.some(u => u && u.trim())
   } catch { /* ignore */ }
 }
 

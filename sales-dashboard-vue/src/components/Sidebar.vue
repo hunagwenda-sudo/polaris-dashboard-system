@@ -1,5 +1,5 @@
 <template>
-  <aside class="w-[232px] bg-trust-800 flex flex-col shrink-0 border-r border-white/[0.06]">
+  <aside class="w-[232px] h-full bg-trust-800 flex flex-col shrink-0 border-r border-white/[0.06]">
     <!-- Logo -->
     <div class="h-18 flex items-center px-5 gap-3">
       <img src="/logo.png" alt="Logo" class="w-10 h-10 rounded-lg object-contain" />
@@ -16,7 +16,7 @@
         <div class="space-y-0.5">
           <router-link v-for="item in group.items" :key="item.name" :to="item.to"
             custom v-slot="{ isActive, navigate }">
-            <button @click="navigate"
+            <button @click="() => { navigate(); emit('navigate') }"
               :class="['w-full text-left px-3 py-2.5 rounded-xl text-[13px] flex items-center gap-2.5 transition-all duration-200 cursor-pointer relative font-sans',
                 isActive ? 'bg-brand/[0.12] text-brand-light font-medium' : 'text-trust-300 hover:text-white hover:bg-white/[0.04]']">
               <div v-if="isActive" class="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-brand" />
@@ -63,6 +63,7 @@ import { useAuthImage } from '../composables/useAuthImage'
 import LevelBadge from './LevelBadge.vue'
 
 const auth = useAuthStore()
+const emit = defineEmits(['navigate'])
 const roleMap = { admin: '管理员', partner: '合伙人', sales: '运营', service: '客服' }
 const avatar = computed(() => (auth.user?.name || '用')[0])
 
@@ -78,6 +79,7 @@ const IconShield = (_, { attrs }) => h('svg', { ...iconDefaults, ...attrs, inner
 const IconLayers = (_, { attrs }) => h('svg', { ...iconDefaults, ...attrs, innerHTML: '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>' })
 const IconFolder = (_, { attrs }) => h('svg', { ...iconDefaults, ...attrs, innerHTML: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>' })
 const IconTrending = (_, { attrs }) => h('svg', { ...iconDefaults, ...attrs, innerHTML: '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>' })
+const IconCalendar = (_, { attrs }) => h('svg', { ...iconDefaults, ...attrs, innerHTML: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>' })
 const IconHeadphones = (_, { attrs }) => h('svg', { ...iconDefaults, ...attrs, innerHTML: '<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>' })
 
 const navGroups = [
@@ -85,7 +87,7 @@ const navGroups = [
     title: '工作台',
     items: [
       { name: 'dashboard', to: '/', label: '销售大盘看板', icon: IconGrid, roles: ['admin', 'partner', 'sales'] },
-      { name: 'dataentry', to: '/data-entry', label: '每日业绩录入', icon: IconEdit, roles: ['partner', 'sales'] },
+      { name: 'dataentry', to: '/data-entry', label: '昨日业绩录入', icon: IconEdit, roles: ['partner', 'sales'] },
       { name: 'serviceentry', to: '/service-entry', label: '客服日报录入', icon: IconHeadphones, roles: ['service'] },
       { name: 'records', to: '/records', label: '业绩查看', icon: IconFile, roles: ['admin', 'partner', 'sales'] },
       { name: 'serviceRecords', to: '/service-records', label: '客服业绩查看', icon: IconHeadphones, roles: ['admin', 'partner', 'service'] },
@@ -99,6 +101,7 @@ const navGroups = [
       { name: 'members', to: '/members', label: '人员管理', icon: IconUser, roles: ['admin', 'partner'] },
       { name: 'platforms', to: '/platforms', label: '渠道管理', icon: IconLayers, roles: ['admin'] },
       { name: 'levelConfig', to: '/level-config', label: '职级设定', icon: IconTrending, roles: ['admin'] },
+      { name: 'quarterlyReport', to: '/quarterly-report', label: '季度报表', icon: IconCalendar, roles: ['admin'] },
     ],
   },
 ]

@@ -23,6 +23,7 @@ public class UserController {
 
     private final UserService userService;
     private final AuditService auditService;
+    private final com.saleshub.service.UserPlatformService userPlatformService;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'PARTNER')")
@@ -77,6 +78,27 @@ public class UserController {
         userService.resetPassword(id);
         var details = (JwtUserDetails) auth.getDetails();
         auditService.log(details.getUserId(), details.getUsername(), "RESET_PWD", "SysUser", id, null);
+        return Result.ok();
+    }
+
+    /** 获取用户的渠道分配 */
+    @GetMapping("/{id}/platforms")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PARTNER')")
+    public Result<?> getUserPlatforms(@PathVariable Long id) {
+        return Result.ok(userPlatformService.listByUserId(id));
+    }
+
+    /** 设置用户的渠道分配（全量替换） */
+    @PutMapping("/{id}/platforms")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PARTNER')")
+    public Result<?> assignPlatforms(@PathVariable Long id, @RequestBody Map<String, Object> body, Authentication auth) {
+        @SuppressWarnings("unchecked")
+        java.util.List<Number> accountIds = (java.util.List<Number>) body.get("accountIds");
+        java.util.List<Long> ids = accountIds == null ? java.util.List.of()
+            : accountIds.stream().map(Number::longValue).toList();
+        userPlatformService.assign(id, ids);
+        var details = (JwtUserDetails) auth.getDetails();
+        auditService.log(details.getUserId(), details.getUsername(), "UPDATE", "SysUserPlatform", id, "accountIds=" + ids);
         return Result.ok();
     }
 }

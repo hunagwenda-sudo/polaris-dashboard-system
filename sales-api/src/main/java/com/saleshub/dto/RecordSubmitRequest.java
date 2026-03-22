@@ -18,6 +18,7 @@ public class RecordSubmitRequest {
     public static class RecordItem {
         @NotBlank(message = "平台不能为空")
         private String platform;
+        private Long accountId;     // 关联 sys_platform_account.id
         private String accountNote; // 账号备注，可为空
         @NotNull @DecimalMin(value = "0", message = "GMV不能为负")
         private BigDecimal gmv;

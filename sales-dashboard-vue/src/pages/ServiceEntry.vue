@@ -1,11 +1,11 @@
 <template>
   <div class="max-w-[680px] mx-auto">
     <div class="bg-surface-raised rounded-2xl border border-white/[0.06] overflow-hidden">
-      <div class="px-7 pt-6 pb-4">
+      <div class="px-4 sm:px-7 pt-5 sm:pt-6 pb-4">
         <h3 class="text-[14px] font-semibold text-white tracking-tight font-sans">客服日报录入</h3>
         <p class="text-[11px] text-trust-300 mt-1 font-sans">填写各渠道班次的接待量、回复率、好评率</p>
       </div>
-      <div class="px-7 pb-7 space-y-5">
+      <div class="px-4 sm:px-7 pb-5 sm:pb-7 space-y-5">
         <!-- 日期 -->
         <div>
           <label for="svc-date" class="block text-[10px] font-semibold text-trust-300 uppercase tracking-[0.1em] mb-2 font-sans">日期</label>
@@ -15,29 +15,67 @@
 
         <!-- 渠道 × 班次 表格 -->
         <div class="space-y-1">
-          <div class="grid grid-cols-[1fr_0.7fr_0.8fr_0.8fr_0.8fr] gap-2 text-[9px] font-semibold text-trust-300 tracking-[0.12em] uppercase px-1 mb-2 font-sans">
+          <!-- Desktop header -->
+          <div class="hidden sm:grid grid-cols-[1fr_0.7fr_0.8fr_0.8fr_0.8fr] gap-2 text-[9px] font-semibold text-trust-300 tracking-[0.12em] uppercase px-1 mb-2 font-sans">
             <span>渠道</span><span>班次</span><span>接待量</span><span>3分钟回复率</span><span>好评率</span>
           </div>
-          <div v-for="(row, i) in rows" :key="i" class="grid grid-cols-[1fr_0.7fr_0.8fr_0.8fr_0.8fr] gap-2 items-center py-1">
-            <div class="flex items-center gap-2">
-              <span class="w-7 h-7 rounded-lg bg-brand/[0.08] border border-brand/[0.1] flex items-center justify-center text-[9px] font-bold text-brand-light font-mono">{{ row.abbr }}</span>
-              <span class="text-[12px] font-medium text-trust-300 font-sans">{{ row.name }}</span>
+          <div v-for="(row, i) in rows" :key="i" class="rounded-xl sm:rounded-none border border-white/[0.04] sm:border-0 p-3 sm:p-0 space-y-2 sm:space-y-0">
+            <!-- Mobile: stacked layout -->
+            <div class="sm:hidden space-y-2.5">
+              <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-brand/[0.08] border border-brand/[0.1] flex items-center justify-center text-[9px] font-bold text-brand-light font-mono">{{ row.abbr }}</span>
+                <span class="text-[12px] font-medium text-trust-300 font-sans">{{ row.name }}</span>
+              </div>
+              <select v-model="row.shift" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-[11px] text-gray-300 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer">
+                <option value="morning">早班</option>
+                <option value="evening">晚班</option>
+              </select>
+              <div class="grid grid-cols-3 gap-2">
+                <div>
+                  <label class="block text-[9px] text-trust-400 mb-1 font-sans">接待量</label>
+                  <input type="number" placeholder="0" v-model="row.receptionCount" min="0"
+                    class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors tabular-nums" />
+                </div>
+                <div>
+                  <label class="block text-[9px] text-trust-400 mb-1 font-sans">回复率</label>
+                  <div class="relative">
+                    <input type="number" placeholder="0" v-model="row.replyRate" min="0" max="100" step="0.1"
+                      class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 pr-7 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors tabular-nums" />
+                    <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-trust-400 font-mono">%</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-[9px] text-trust-400 mb-1 font-sans">好评率</label>
+                  <div class="relative">
+                    <input type="number" placeholder="0" v-model="row.praiseRate" min="0" max="100" step="0.1"
+                      class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 pr-7 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors tabular-nums" />
+                    <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-trust-400 font-mono">%</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <select v-model="row.shift" class="bg-white/[0.03] border border-white/[0.06] rounded-lg px-2 py-2 text-[11px] text-gray-300 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer">
-              <option value="morning">早班</option>
-              <option value="evening">晚班</option>
-            </select>
-            <input type="number" placeholder="0" v-model="row.receptionCount" min="0"
-              class="bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors tabular-nums" />
-            <div class="relative">
-              <input type="number" placeholder="0" v-model="row.replyRate" min="0" max="100" step="0.1"
-                class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 pr-7 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors tabular-nums" />
-              <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-trust-400 font-mono">%</span>
-            </div>
-            <div class="relative">
-              <input type="number" placeholder="0" v-model="row.praiseRate" min="0" max="100" step="0.1"
-                class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 pr-7 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors tabular-nums" />
-              <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-trust-400 font-mono">%</span>
+            <!-- Desktop: row layout -->
+            <div class="hidden sm:grid grid-cols-[1fr_0.7fr_0.8fr_0.8fr_0.8fr] gap-2 items-center py-1">
+              <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-brand/[0.08] border border-brand/[0.1] flex items-center justify-center text-[9px] font-bold text-brand-light font-mono">{{ row.abbr }}</span>
+                <span class="text-[12px] font-medium text-trust-300 font-sans">{{ row.name }}</span>
+              </div>
+              <select v-model="row.shift" class="bg-white/[0.03] border border-white/[0.06] rounded-lg px-2 py-2 text-[11px] text-gray-300 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer">
+                <option value="morning">早班</option>
+                <option value="evening">晚班</option>
+              </select>
+              <input type="number" placeholder="0" v-model="row.receptionCount" min="0"
+                class="bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors tabular-nums" />
+              <div class="relative">
+                <input type="number" placeholder="0" v-model="row.replyRate" min="0" max="100" step="0.1"
+                  class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 pr-7 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors tabular-nums" />
+                <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-trust-400 font-mono">%</span>
+              </div>
+              <div class="relative">
+                <input type="number" placeholder="0" v-model="row.praiseRate" min="0" max="100" step="0.1"
+                  class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 pr-7 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors tabular-nums" />
+                <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-trust-400 font-mono">%</span>
+              </div>
             </div>
           </div>
         </div>

@@ -52,17 +52,19 @@ public class TeamServiceImpl implements TeamService {
             map.put("id", team.getId());
             map.put("name", team.getName());
             map.put("leaderId", team.getLeaderId());
-            map.put("targetDgmv", team.getTargetDgmv());
-
             List<SysUser> members = teamUsers.getOrDefault(team.getId(), List.of());
             map.put("memberCount", (long) members.size());
+
+            // 团队目标 = 成员个人季度目标之和
+            BigDecimal target = members.stream()
+                .map(m -> m.getTargetDgmv() != null ? m.getTargetDgmv() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            map.put("targetDgmv", target);
 
             BigDecimal totalDgmv = members.stream()
                 .map(m -> userDgmvMap.getOrDefault(m.getId(), BigDecimal.ZERO))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             map.put("quarterDgmv", totalDgmv);
-
-            BigDecimal target = team.getTargetDgmv() != null ? team.getTargetDgmv() : BigDecimal.ZERO;
             BigDecimal rate = target.compareTo(BigDecimal.ZERO) > 0
                 ? totalDgmv.multiply(BigDecimal.valueOf(100)).divide(target, 1, java.math.RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;

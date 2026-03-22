@@ -15,4 +15,5 @@ public class UserUpdateRequest {
     private LocalDate birthday;
     private LocalDate hireDate;
     private Integer remindEnabled;
+    private String requiredPlatforms;
 }

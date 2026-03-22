@@ -47,3 +47,4 @@ app:
   upload:
     dir: /app/uploads
     max-size-bytes: 2097152
+  site-url: ${SITE_URL:http://localhost}

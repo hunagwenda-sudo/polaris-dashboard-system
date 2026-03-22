@@ -2,8 +2,11 @@
   <header class="h-16 bg-trust-900/90 backdrop-blur-xl border-b border-white/[0.06] shrink-0 z-10 relative">
     <div class="flex items-center justify-between px-6 h-full">
 
-      <!-- 左：logo + 标题 -->
+      <!-- 左：hamburger + logo + 标题 -->
       <div class="flex items-center gap-2.5">
+        <button @click="$emit('toggleSidebar')" class="lg:hidden w-8 h-8 rounded-xl flex items-center justify-center text-trust-300 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer mr-1">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
         <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-brand to-brand-light flex items-center justify-center shadow-lg shadow-brand/20">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
@@ -67,6 +70,8 @@ import LevelBadge from './LevelBadge.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
+
+defineEmits(['toggleSidebar'])
 
 const roleMap = { admin: '管理员', partner: '合伙人', sales: '运营', service: '客服' }
 const roleLabel = computed(() => roleMap[auth.user?.role] || auth.user?.role || '未知')

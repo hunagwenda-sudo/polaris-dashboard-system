@@ -1,10 +1,12 @@
 <template>
   <div class="space-y-4">
     <!-- 昨日战报 — bar chart -->
-    <div class="bg-surface-raised rounded-2xl border border-white/[0.06] overflow-hidden">
-      <div class="px-6 pt-5 pb-1 flex items-center justify-between">
+    <div ref="dailyChartRef" :class="[dailyFullscreen
+      ? 'bg-surface-raised rounded-2xl border border-white/[0.06] overflow-hidden flex flex-col'
+      : 'bg-surface-raised rounded-2xl border border-white/[0.06] overflow-hidden']">
+      <div class="px-6 pt-5 pb-1 flex items-center justify-between shrink-0">
         <div>
-          <h3 class="text-[13px] font-semibold text-white tracking-tight font-sans">昨日战报</h3>
+          <h3 :class="['font-semibold text-white tracking-tight font-sans', dailyFullscreen ? 'text-[16px]' : 'text-[13px]']">昨日战报</h3>
           <p class="text-[10px] text-trust-300 mt-0.5 font-sans">昨日全员 DGMV 总览</p>
         </div>
         <div class="flex items-center gap-3">
@@ -12,15 +14,22 @@
           <div class="w-8 h-8 rounded-lg bg-accent/[0.08] border border-accent/[0.12] flex items-center justify-center">
             <svg v-bind="iconDefaults" class="w-4 h-4 text-accent"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
           </div>
+          <!-- 展开/收起 -->
+          <button @click="toggleExpand"
+            class="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
+            :title="dailyFullscreen ? '收起' : '展开'">
+            <svg v-if="!dailyFullscreen" v-bind="iconDefaults" class="w-4 h-4 text-trust-300"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            <svg v-else v-bind="iconDefaults" class="w-4 h-4 text-trust-300"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          </button>
         </div>
       </div>
-      <div class="px-3 pb-4 max-h-[360px] overflow-y-auto">
-        <v-chart :option="dragonChartOption" autoresize :style="{ height: chartHeight }" />
+      <div :class="dailyFullscreen ? 'flex-1 px-3 pb-4 overflow-y-auto' : 'px-3 pb-4 max-h-[360px] overflow-y-auto'">
+        <v-chart :option="dragonChartOption" autoresize :style="{ height: dailyFullscreen ? fullscreenChartHeight : chartHeight }" />
       </div>
     </div>
 
     <!-- Hero Board -->
-    <div class="bg-surface-raised rounded-2xl border border-white/[0.06] overflow-hidden">
+    <div v-if="!dailyFullscreen" class="bg-surface-raised rounded-2xl border border-white/[0.06] overflow-hidden">
       <div class="px-6 pt-5 pb-3 flex items-center justify-between">
         <div>
           <h3 class="text-[13px] font-semibold text-white tracking-tight font-sans">本周累计英雄榜</h3>
@@ -84,6 +93,14 @@ const fakeAmount = () => `¥${(Math.random() * 8 + 1).toFixed(1)}万`
 
 const dailyData = ref([])
 const heroBoard = ref([])
+const dailyFullscreen = ref(false)
+const dailyChartRef = ref(null)
+
+function toggleExpand() {
+  dailyFullscreen.value = !dailyFullscreen.value
+}
+
+defineExpose({ dailyFullscreen })
 
 const dailyTotal = computed(() => dailyData.value.reduce((s, d) => s + Number(d.dgmv || 0), 0))
 
@@ -98,6 +115,12 @@ const chartHeight = computed(() => {
   return Math.max(200, count * 32) + 'px'
 })
 
+// 全屏模式：每人更大的条形，充分利用空间
+const fullscreenChartHeight = computed(() => {
+  const count = sortedDailyData.value.length
+  return Math.max(400, count * 52) + 'px'
+})
+
 const dragonChartOption = computed(() => {
   // ECharts Y 轴从下到上，所以 reverse 让第一名在最上面
   const sorted = [...sortedDailyData.value].reverse()
@@ -105,6 +128,7 @@ const dragonChartOption = computed(() => {
   const values = sorted.map(d => Number(d.dgmv || 0))
   const count = sorted.length
   const barWidth = count <= 8 ? 18 : count <= 14 ? 14 : 11
+  const isFs = dailyFullscreen.value
   return {
     tooltip: {
       trigger: 'axis',
@@ -121,7 +145,7 @@ const dragonChartOption = computed(() => {
         return `<span style="color:#94A3B8">${d.name}</span><br/><span style="font-family:JetBrains Mono;font-size:14px;font-weight:700;color:#3B82F6">${display}</span>`
       },
     },
-    grid: { left: 70, right: 60, top: 12, bottom: 28 },
+    grid: { left: isFs ? 90 : 70, right: isFs ? 80 : 60, top: 12, bottom: 28 },
     xAxis: {
       type: 'value',
       axisLine: { show: false },
@@ -141,14 +165,14 @@ const dragonChartOption = computed(() => {
       axisTick: { show: false },
       axisLabel: {
         color: '#CBD5E1',
-        fontSize: 11,
+        fontSize: isFs ? 14 : 11,
         fontFamily: 'Inter',
         fontWeight: 500,
       },
     },
     series: [{
       type: 'bar',
-      barWidth,
+      barWidth: isFs ? Math.max(24, barWidth + 8) : barWidth,
       itemStyle: {
         borderRadius: [0, 6, 6, 0],
         color: {
@@ -182,7 +206,7 @@ const dragonChartOption = computed(() => {
           return '¥0'
         },
         color: '#94A3B8',
-        fontSize: 10,
+        fontSize: isFs ? 13 : 10,
         fontWeight: 600,
         fontFamily: 'JetBrains Mono',
       },

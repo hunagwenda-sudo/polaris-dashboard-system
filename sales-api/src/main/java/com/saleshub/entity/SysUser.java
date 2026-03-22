@@ -24,6 +24,7 @@ public class SysUser {
     private LocalDate birthday;
     private LocalDate hireDate;
     private Integer remindEnabled; // 1=提醒填报 0=不提醒
+    private String requiredPlatforms; // 需要每日填报的平台code，逗号分隔
     private Boolean passwordChanged; // 是否已修改过密码
 
     @TableLogic

@@ -14,6 +14,7 @@ public class BizDailyRecord {
     private Long userId;
     private LocalDate recordDate;
     private String platform;
+    private Long accountId;
     private String accountNote;
     private BigDecimal gmv;
     private BigDecimal refund;

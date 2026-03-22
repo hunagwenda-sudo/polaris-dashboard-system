@@ -82,10 +82,6 @@
           <input v-model="form.name" placeholder="小组名称" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white placeholder-trust-400 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30" />
         </div>
         <div>
-          <label class="text-[10px] text-trust-300 font-sans block mb-1">季度目标 DGMV (元)</label>
-          <input v-model.number="form.targetDgmv" type="number" placeholder="0" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30" />
-        </div>
-        <div>
           <label class="text-[10px] text-trust-300 font-sans block mb-1">组长 <span class="text-danger-light">*</span></label>
           <select v-model="form.leaderId" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-gray-300 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer">
             <option :value="null" disabled>请选择组长</option>
@@ -107,10 +103,6 @@
         <div>
           <label class="text-[10px] text-trust-300 font-sans block mb-1">小组名称</label>
           <input v-model="editForm.name" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white placeholder-trust-400 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30" />
-        </div>
-        <div>
-          <label class="text-[10px] text-trust-300 font-sans block mb-1">季度目标 DGMV (元)</label>
-          <input v-model.number="editForm.targetDgmv" type="number" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30" />
         </div>
         <div>
           <label class="text-[10px] text-trust-300 font-sans block mb-1">组长</label>
@@ -209,13 +201,13 @@ const displayGroups = computed(() => {
 // Create
 const showCreate = ref(false)
 const formError = ref('')
-const form = reactive({ name: '', targetDgmv: '', leaderId: null })
+const form = reactive({ name: '', leaderId: null })
 
 // Edit
 const showEdit = ref(false)
 const editError = ref('')
 const editId = ref(null)
-const editForm = reactive({ name: '', targetDgmv: '', leaderId: null })
+const editForm = reactive({ name: '', leaderId: null })
 
 // 编辑时可选的组长：该小组的成员（admin/partner 从 allUsers，组长从 fetchedMembers）
 const editGroupUsers = computed(() => {
@@ -271,7 +263,7 @@ async function fetchAvailableMembers(groupId) {
 }
 
 function openCreate() {
-  form.name = ''; form.targetDgmv = ''; form.leaderId = null
+  form.name = ''; form.leaderId = null
   formError.value = ''
   showCreate.value = true
 }
@@ -281,7 +273,7 @@ async function createGroup() {
   if (!form.name) { formError.value = '请填写小组名称'; return }
   if (!form.leaderId) { formError.value = '请选择组长'; return }
   try {
-    await api.post('/groups', { name: form.name, targetDgmv: form.targetDgmv || 0, leaderId: form.leaderId })
+    await api.post('/groups', { name: form.name, leaderId: form.leaderId })
     showCreate.value = false
     fetchGroups(); fetchUsers()
   } catch (e) { formError.value = e?.message || '创建失败' }
@@ -290,7 +282,6 @@ async function createGroup() {
 async function openEdit(g) {
   editId.value = g.id
   editForm.name = g.name
-  editForm.targetDgmv = g.targetDgmv || 0
   editForm.leaderId = g.leaderId || null
   editError.value = ''
   // 组长需要从 API 获取成员列表

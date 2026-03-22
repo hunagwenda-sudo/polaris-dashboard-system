@@ -48,3 +48,4 @@ app:
   upload:
     dir: uploads
     max-size-bytes: 2097152  # 2MB 应用层限制
+  site-url: http://localhost:5173

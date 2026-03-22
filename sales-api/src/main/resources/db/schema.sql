@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS sys_user (
     target_dgmv DECIMAL(14,2) DEFAULT 0 COMMENT '个人季度目标DGMV',
     status VARCHAR(16) DEFAULT 'active',
     password_changed TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否已修改密码 0=未修改 1=已修改',
+    required_platforms VARCHAR(200) DEFAULT NULL COMMENT '需要每日填报的平台code，逗号分隔',
     birthday DATE COMMENT '生日',
     hire_date DATE COMMENT '入职日期',
     deleted TINYINT DEFAULT 0,
@@ -94,6 +95,7 @@ CREATE TABLE IF NOT EXISTS biz_daily_record (
     user_id BIGINT NOT NULL,
     record_date DATE NOT NULL,
     platform VARCHAR(32) NOT NULL,
+    account_id BIGINT DEFAULT NULL COMMENT '关联 sys_platform_account.id',
     gmv DECIMAL(14,2) DEFAULT 0,
     refund DECIMAL(14,2) DEFAULT 0,
     dgmv DECIMAL(14,2) DEFAULT 0,
@@ -131,6 +133,49 @@ CREATE TABLE IF NOT EXISTS sys_dict (
     deleted TINYINT DEFAULT 0,
     INDEX idx_type (type),
     UNIQUE KEY uk_type_code (type, code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 渠道账号表
+CREATE TABLE IF NOT EXISTS sys_platform_account (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    platform_code VARCHAR(32) NOT NULL COMMENT '关联 sys_dict platform code',
+    account_name VARCHAR(100) NOT NULL COMMENT '账号名称',
+    sort INT DEFAULT 0,
+    status VARCHAR(16) DEFAULT 'active',
+    deleted TINYINT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_platform_code (platform_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 用户渠道分配表
+CREATE TABLE IF NOT EXISTS sys_user_platform (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    platform_code VARCHAR(32) NOT NULL,
+    account_id BIGINT NOT NULL COMMENT '关联 sys_platform_account.id',
+    deleted TINYINT DEFAULT 0,
+    INDEX idx_user_id (user_id),
+    INDEX idx_account_id (account_id),
+    UNIQUE KEY uk_user_account (user_id, account_id, deleted),
+    CONSTRAINT fk_up_user FOREIGN KEY (user_id) REFERENCES sys_user(id),
+    CONSTRAINT fk_up_account FOREIGN KEY (account_id) REFERENCES sys_platform_account(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 季度快照表
+CREATE TABLE IF NOT EXISTS biz_quarterly_snapshot (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    user_name VARCHAR(50) COMMENT '冗余姓名',
+    team_id BIGINT COMMENT '所属团队',
+    team_name VARCHAR(100) COMMENT '冗余团队名',
+    quarter VARCHAR(10) NOT NULL COMMENT '季度标识，如 2026-Q1',
+    level VARCHAR(10) COMMENT '该季度最终确定职级',
+    estimated_level VARCHAR(10) COMMENT '按DGMV估算职级',
+    total_dgmv DECIMAL(14,2) DEFAULT 0 COMMENT '该季度总DGMV',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_quarter (quarter),
+    INDEX idx_user_quarter (user_id, quarter),
+    UNIQUE KEY uk_user_quarter (user_id, quarter)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============================================

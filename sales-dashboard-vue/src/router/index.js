@@ -17,6 +17,7 @@ const routes = [
   { path: '/change-password', name: 'changePassword', component: () => import('../pages/ChangePassword.vue') },
   { path: '/platforms', name: 'platforms', component: () => import('../pages/PlatformManage.vue'), meta: { roles: ['admin'] } },
   { path: '/level-config', name: 'levelConfig', component: () => import('../pages/LevelConfig.vue'), meta: { roles: ['admin'] } },
+  { path: '/quarterly-report', name: 'quarterlyReport', component: () => import('../pages/QuarterlyReport.vue'), meta: { roles: ['admin'] } },
 ]
 
 const router = createRouter({

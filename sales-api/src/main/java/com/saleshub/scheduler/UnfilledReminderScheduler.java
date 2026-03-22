@@ -1,6 +1,8 @@
 package com.saleshub.scheduler;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saleshub.entity.SysDict;
 import com.saleshub.mapper.SysDictMapper;
 import com.saleshub.service.FeishuNotifyService;
@@ -12,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +27,7 @@ public class UnfilledReminderScheduler {
     private final ServiceRecordService serviceRecordService;
     private final FeishuNotifyService feishuNotifyService;
     private final SysDictMapper dictMapper;
+    private final ObjectMapper objectMapper;
 
     /** 每天上午 9:00 第一次提醒 */
     @Scheduled(cron = "0 0 9 * * ?", zone = "Asia/Shanghai")
@@ -43,41 +47,56 @@ public class UnfilledReminderScheduler {
         LocalDate yesterday = LocalDate.now().minusDays(1);
 
         // 运营/合伙人业绩未填提醒
-        String recordWebhook = getWebhookUrl("record_unfilled");
-        if (recordWebhook != null && !recordWebhook.isBlank()) {
+        List<String> recordWebhooks = getWebhookUrls("record_unfilled");
+        if (!recordWebhooks.isEmpty()) {
             List<Map<String, Object>> unfilled = recordService.getUnfilledUsers(yesterday);
             List<String> names = unfilled.stream()
                 .map(m -> (String) m.get("name"))
                 .toList();
             feishuNotifyService.sendUnfilledReminder(
-                recordWebhook,
+                recordWebhooks,
                 prefix + " " + yesterday + " 运营业绩未填报提醒",
-                names
+                names,
+                "/data-entry"
             );
         }
 
         // 客服业绩未填提醒
-        String serviceWebhook = getWebhookUrl("service_record_unfilled");
-        if (serviceWebhook != null && !serviceWebhook.isBlank()) {
+        List<String> serviceWebhooks = getWebhookUrls("service_record_unfilled");
+        if (!serviceWebhooks.isEmpty()) {
             List<Map<String, Object>> unfilled = serviceRecordService.getUnfilledUsers(yesterday);
             List<String> names = unfilled.stream()
                 .map(m -> (String) m.get("name"))
                 .toList();
             feishuNotifyService.sendUnfilledReminder(
-                serviceWebhook,
+                serviceWebhooks,
                 prefix + " " + yesterday + " 客服业绩未填报提醒",
-                names
+                names,
+                "/service-entry"
             );
         }
     }
 
-    private String getWebhookUrl(String code) {
+    private List<String> getWebhookUrls(String code) {
         SysDict dict = dictMapper.selectOne(
             new LambdaQueryWrapper<SysDict>()
                 .eq(SysDict::getType, "webhook")
                 .eq(SysDict::getCode, code)
                 .eq(SysDict::getStatus, "active")
         );
-        return dict != null ? dict.getLabel() : null;
+        if (dict == null || dict.getLabel() == null || dict.getLabel().isBlank()) {
+            return Collections.emptyList();
+        }
+        String label = dict.getLabel().trim();
+        if (label.startsWith("[")) {
+            try {
+                return objectMapper.readValue(label, new TypeReference<List<String>>() {});
+            } catch (Exception e) {
+                log.warn("解析 webhook urls 失败: {}", e.getMessage());
+                return Collections.emptyList();
+            }
+        }
+        // 兼容旧格式
+        return List.of(label);
     }
 }

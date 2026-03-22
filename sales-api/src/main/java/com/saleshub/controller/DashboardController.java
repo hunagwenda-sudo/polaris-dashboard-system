@@ -52,4 +52,28 @@ public class DashboardController {
     public Result<Map<String, Object>> announcement() {
         return Result.ok(dashboardService.getAnnouncement());
     }
+
+    /** 获取可用的季度列表 */
+    @GetMapping("/quarterly/quarters")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result<List<String>> availableQuarters() {
+        return Result.ok(dashboardService.getAvailableQuarters());
+    }
+
+    /** 获取指定季度的快照数据 */
+    @GetMapping("/quarterly/snapshots")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result<?> quarterlySnapshots(@RequestParam String quarter) {
+        return Result.ok(dashboardService.getQuarterlySnapshots(quarter));
+    }
+
+    /** 手动生成指定季度的快照（补录历史） */
+    @PostMapping("/quarterly/generate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result<?> generateSnapshot(@RequestBody Map<String, String> body) {
+        String quarter = body.get("quarter");
+        if (quarter == null || quarter.isBlank()) throw new com.saleshub.common.BusinessException("请指定季度");
+        int count = dashboardService.generateQuarterlySnapshot(quarter);
+        return Result.ok(Map.of("count", count));
+    }
 }

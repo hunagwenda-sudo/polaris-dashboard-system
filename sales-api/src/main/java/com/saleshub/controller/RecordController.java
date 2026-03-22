@@ -27,6 +27,8 @@ public class RecordController {
     private final RecordService recordService;
     private final AuditService auditService;
     private final com.saleshub.service.DashboardService dashboardService;
+    private final com.saleshub.service.UserPlatformService userPlatformService;
+    private final com.saleshub.mapper.SysPlatformAccountMapper platformAccountMapper;
 
     @GetMapping("/check")
     @PreAuthorize("hasAuthority('record:create')")
@@ -36,6 +38,34 @@ public class RecordController {
         Long userId = (Long) auth.getPrincipal();
         boolean submitted = recordService.hasSubmitted(userId, date);
         return Result.ok(submitted);
+    }
+
+    /** 获取当前用户被分配的渠道+账号（用于数据录入页面） */
+    @GetMapping("/my-platforms")
+    @PreAuthorize("hasAuthority('record:create')")
+    public Result<?> myPlatforms(Authentication auth) {
+        Long userId = (Long) auth.getPrincipal();
+        var assignments = userPlatformService.listByUserId(userId);
+        // 补充账号名称
+        if (!assignments.isEmpty()) {
+            var accountIds = assignments.stream().map(a -> a.getAccountId()).toList();
+            var accounts = platformAccountMapper.selectList(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.saleshub.entity.SysPlatformAccount>()
+                    .in(com.saleshub.entity.SysPlatformAccount::getId, accountIds)
+            );
+            var accountMap = accounts.stream().collect(java.util.stream.Collectors.toMap(
+                com.saleshub.entity.SysPlatformAccount::getId, a -> a));
+            var result = assignments.stream().map(a -> {
+                var acc = accountMap.get(a.getAccountId());
+                return Map.of(
+                    "platformCode", a.getPlatformCode(),
+                    "accountId", a.getAccountId(),
+                    "accountName", acc != null ? acc.getAccountName() : ""
+                );
+            }).toList();
+            return Result.ok(result);
+        }
+        return Result.ok(List.of());
     }
 
     @PostMapping
