@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-5 max-w-[1280px] mx-auto">
+  <div class="space-y-5">
 
     <!-- 横幅图片区域 -->
     <div v-if="!leaderboardExpanded" class="relative group rounded-2xl overflow-hidden h-[166px] bg-white/[0.03] border border-white/[0.06]">

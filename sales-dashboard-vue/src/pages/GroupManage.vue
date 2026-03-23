@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-[1100px] mx-auto space-y-5">
+  <div class="space-y-5">
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-[15px] font-semibold text-white font-sans">小组管理</h2>

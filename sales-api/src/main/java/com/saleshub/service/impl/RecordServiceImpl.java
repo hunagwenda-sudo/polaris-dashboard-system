@@ -36,6 +36,16 @@ public class RecordServiceImpl implements RecordService {
         if (request.getRecordDate() != null && !request.getRecordDate().isBefore(LocalDate.now())) {
             throw new BusinessException("只能录入昨天及之前的业绩");
         }
+        doSubmit(userId, request);
+    }
+
+    @Override
+    @Transactional
+    public void submitRecordsNoDateCheck(Long userId, RecordSubmitRequest request) {
+        doSubmit(userId, request);
+    }
+
+    private void doSubmit(Long userId, RecordSubmitRequest request) {
         for (var item : request.getItems()) {
             // 按 userId + recordDate + platform + accountId 去重
             Long accountId = item.getAccountId();

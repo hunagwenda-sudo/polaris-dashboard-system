@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-[1100px] mx-auto space-y-4">
+  <div class="space-y-4">
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-[15px] font-semibold text-white font-sans">业绩查看</h2>

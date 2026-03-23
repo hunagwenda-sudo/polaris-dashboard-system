@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-[800px] mx-auto space-y-4">
+  <div class="space-y-4">
     <div class="flex items-center gap-3">
       <button @click="$router.back()" class="flex items-center justify-center w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] transition-colors cursor-pointer">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-trust-300"><polyline points="15 18 9 12 15 6"/></svg>

@@ -3,13 +3,9 @@
     <div class="w-full max-w-sm">
       <!-- Logo -->
       <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 mb-4">
-          <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-          </svg>
-        </div>
-        <h1 class="text-2xl font-bold text-white">团队销售大盘</h1>
-        <p class="text-trust-300 mt-1 text-sm">Sales Dashboard System</p>
+        <img src="/logo.png" alt="曙光引擎" class="w-16 h-16 mx-auto mb-4 rounded-2xl" />
+        <h1 class="text-2xl font-bold text-white">曙光引擎</h1>
+        <p class="text-trust-300 mt-1 text-sm tracking-widest">DAWN ENGINE</p>
       </div>
 
       <!-- Login Card -->

@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-[1100px] mx-auto space-y-4">
+  <div class="space-y-4">
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-[15px] font-semibold text-white font-sans">人员管理</h2>
@@ -17,7 +17,9 @@
         <h3 class="text-[14px] font-semibold text-white font-sans">添加人员</h3>
         <div>
           <label class="text-[10px] text-trust-300 font-sans block mb-1">用户名（登录用）</label>
-          <input v-model="form.username" placeholder="username" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white placeholder-trust-400 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30" />
+          <input v-model="form.username" @input="validateUsername" placeholder="仅限字母、数字、下划线" class="w-full bg-white/[0.03] border rounded-lg px-4 py-2 text-[12px] text-white placeholder-trust-400 font-sans focus:outline-none focus:ring-2 transition-colors"
+            :class="usernameError ? 'border-danger/50 focus:ring-danger/30' : 'border-white/[0.06] focus:ring-brand/30'" />
+          <p v-if="usernameError" class="text-[10px] text-danger-light mt-0.5 font-sans">{{ usernameError }}</p>
         </div>
         <div>
           <label class="text-[10px] text-trust-300 font-sans block mb-1">姓名</label>
@@ -82,6 +84,10 @@
         <!-- 基本信息 2列 -->
         <div class="grid grid-cols-2 gap-3">
           <div>
+            <label class="text-[10px] text-trust-300 font-sans block mb-1">用户名</label>
+            <div class="w-full bg-white/[0.02] border border-white/[0.04] rounded-lg px-3 py-1.5 text-[12px] text-gray-400 font-sans">{{ editForm.username }}</div>
+          </div>
+          <div>
             <label class="text-[10px] text-trust-300 font-sans block mb-1">姓名</label>
             <input v-model="editForm.name" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-1.5 text-[12px] text-white font-sans focus:outline-none focus:ring-2 focus:ring-brand/30" />
           </div>
@@ -97,10 +103,7 @@
           </div>
           <div>
             <label class="text-[10px] text-trust-300 font-sans block mb-1">所属团队</label>
-            <select v-model="editForm.teamId" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-1.5 text-[12px] text-gray-300 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer">
-              <option :value="null">无团队</option>
-              <option v-for="t in teams" :key="t.id" :value="t.id">{{ t.name }}</option>
-            </select>
+            <div class="w-full bg-white/[0.02] border border-white/[0.04] rounded-lg px-3 py-1.5 text-[12px] text-gray-400 font-sans">{{ teamMap[editForm.teamId] || '无团队' }}</div>
           </div>
           <div>
             <label class="text-[10px] text-trust-300 font-sans block mb-1">职级</label>
@@ -329,9 +332,19 @@ const form = reactive({ username: '', name: '', phone: '', role: 'sales', teamId
 const showEdit = ref(false)
 const editError = ref('')
 const editId = ref(null)
-const editForm = reactive({ name: '', phone: '', role: 'sales', teamId: null, level: 'K1', birthday: '', hireDate: '', remindEnabled: 1, status: 'active', assignedAccountIds: [] })
+const editForm = reactive({ username: '', name: '', phone: '', role: 'sales', teamId: null, level: 'K1', birthday: '', hireDate: '', remindEnabled: 1, status: 'active', assignedAccountIds: [] })
 
 let debounceTimer = null
+
+const usernameError = ref('')
+function validateUsername() {
+  const v = form.username
+  if (!v) { usernameError.value = ''; return }
+  if (!/^[a-zA-Z0-9_]+$/.test(v)) { usernameError.value = '仅允许字母、数字、下划线'; return }
+  if (v.length < 3) { usernameError.value = '至少3个字符'; return }
+  if (v.length > 30) { usernameError.value = '最多30个字符'; return }
+  usernameError.value = ''
+}
 
 function debounceFetch() {
   clearTimeout(debounceTimer)
@@ -400,6 +413,9 @@ function openCreate() {
 
 async function createUser() {
   formError.value = ''
+  validateUsername()
+  if (usernameError.value) { formError.value = usernameError.value; return }
+  if (!form.username) { formError.value = '请输入用户名'; return }
   try {
     const { assignedAccountIds, ...rest } = form
     const payload = { ...rest, birthday: form.birthday || null, hireDate: form.hireDate || null }
@@ -417,6 +433,7 @@ async function createUser() {
 
 async function openEdit(m) {
   editId.value = m.id
+  editForm.username = m.username || ''
   editForm.name = m.name
   editForm.phone = m.phone || ''
   editForm.role = m.role
@@ -439,7 +456,7 @@ async function openEdit(m) {
 async function updateUser() {
   editError.value = ''
   try {
-    const { assignedAccountIds, ...rest } = editForm
+    const { assignedAccountIds, teamId, ...rest } = editForm
     const payload = { ...rest, birthday: editForm.birthday || null, hireDate: editForm.hireDate || null }
     await api.put(`/users/${editId.value}`, payload)
     // 保存渠道分配

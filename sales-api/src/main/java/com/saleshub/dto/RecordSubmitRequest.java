@@ -11,6 +11,9 @@ public class RecordSubmitRequest {
     @NotNull(message = "日期不能为空")
     private LocalDate recordDate;
 
+    /** 管理员补录时指定的目标用户ID */
+    private Long userId;
+
     @NotEmpty(message = "至少提交一条记录")
     private List<RecordItem> items;
 

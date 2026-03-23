@@ -5,7 +5,7 @@
       <img src="/logo.png" alt="Logo" class="w-10 h-10 rounded-lg object-contain" />
       <div>
         <span class="text-[13px] font-semibold text-white tracking-tight font-sans block leading-tight">曙光引擎</span>
-        <span class="text-[9px] text-trust-300 font-sans tracking-wider">AURORA ENGINE</span>
+        <span class="text-[9px] text-trust-300 font-sans tracking-wider">DAWN ENGINE</span>
       </div>
     </div>
 
@@ -81,6 +81,7 @@ const IconFolder = (_, { attrs }) => h('svg', { ...iconDefaults, ...attrs, inner
 const IconTrending = (_, { attrs }) => h('svg', { ...iconDefaults, ...attrs, innerHTML: '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>' })
 const IconCalendar = (_, { attrs }) => h('svg', { ...iconDefaults, ...attrs, innerHTML: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>' })
 const IconHeadphones = (_, { attrs }) => h('svg', { ...iconDefaults, ...attrs, innerHTML: '<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>' })
+const IconClipboard = (_, { attrs }) => h('svg', { ...iconDefaults, ...attrs, innerHTML: '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>' })
 
 const navGroups = [
   {
@@ -89,6 +90,7 @@ const navGroups = [
       { name: 'dashboard', to: '/', label: '销售大盘看板', icon: IconGrid, roles: ['admin', 'partner', 'sales'] },
       { name: 'dataentry', to: '/data-entry', label: '昨日业绩录入', icon: IconEdit, roles: ['partner', 'sales'] },
       { name: 'serviceentry', to: '/service-entry', label: '客服日报录入', icon: IconHeadphones, roles: ['service'] },
+      { name: 'backfill', to: '/backfill', label: '业绩补录', icon: IconClipboard, roles: ['admin'] },
       { name: 'records', to: '/records', label: '业绩查看', icon: IconFile, roles: ['admin', 'partner', 'sales'] },
       { name: 'serviceRecords', to: '/service-records', label: '客服业绩查看', icon: IconHeadphones, roles: ['admin', 'partner', 'service'] },
     ],
@@ -99,7 +101,7 @@ const navGroups = [
       { name: 'team', to: '/team', label: '团队管理', icon: IconUsers, roles: ['admin', 'partner'] },
       { name: 'groups', to: '/groups', label: '小组管理', icon: IconFolder, roles: ['admin', 'partner'] },
       { name: 'members', to: '/members', label: '人员管理', icon: IconUser, roles: ['admin', 'partner'] },
-      { name: 'platforms', to: '/platforms', label: '渠道管理', icon: IconLayers, roles: ['admin'] },
+      { name: 'platforms', to: '/platforms', label: '渠道管理', icon: IconLayers, roles: ['admin', 'partner'] },
       { name: 'levelConfig', to: '/level-config', label: '职级设定', icon: IconTrending, roles: ['admin'] },
       { name: 'quarterlyReport', to: '/quarterly-report', label: '季度报表', icon: IconCalendar, roles: ['admin'] },
     ],

@@ -9,6 +9,7 @@ import java.time.LocalDate;
 
 public interface RecordService {
     void submitRecords(Long userId, RecordSubmitRequest request);
+    void submitRecordsNoDateCheck(Long userId, RecordSubmitRequest request);
     boolean hasSubmitted(Long userId, LocalDate date);
     IPage<BizDailyRecord> listRecords(Long userId, String keyword, LocalDate startDate, LocalDate endDate, String sortField, String sortOrder, int page, int size);
     BigDecimal sumDgmv(Long userId, String keyword, LocalDate startDate, LocalDate endDate);

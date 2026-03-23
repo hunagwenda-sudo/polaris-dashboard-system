@@ -45,27 +45,34 @@ public class RecordController {
     @PreAuthorize("hasAuthority('record:create')")
     public Result<?> myPlatforms(Authentication auth) {
         Long userId = (Long) auth.getPrincipal();
+        return Result.ok(buildPlatformList(userId));
+    }
+
+    /** 管理员查看指定用户的渠道分配（用于业绩补录） */
+    @GetMapping("/user-platforms/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result<?> userPlatforms(@PathVariable Long userId) {
+        return Result.ok(buildPlatformList(userId));
+    }
+
+    private List<Map<String, Object>> buildPlatformList(Long userId) {
         var assignments = userPlatformService.listByUserId(userId);
-        // 补充账号名称
-        if (!assignments.isEmpty()) {
-            var accountIds = assignments.stream().map(a -> a.getAccountId()).toList();
-            var accounts = platformAccountMapper.selectList(
-                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.saleshub.entity.SysPlatformAccount>()
-                    .in(com.saleshub.entity.SysPlatformAccount::getId, accountIds)
+        if (assignments.isEmpty()) return List.of();
+        var accountIds = assignments.stream().map(a -> a.getAccountId()).toList();
+        var accounts = platformAccountMapper.selectList(
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.saleshub.entity.SysPlatformAccount>()
+                .in(com.saleshub.entity.SysPlatformAccount::getId, accountIds)
+        );
+        var accountMap = accounts.stream().collect(java.util.stream.Collectors.toMap(
+            com.saleshub.entity.SysPlatformAccount::getId, a -> a));
+        return assignments.stream().map(a -> {
+            var acc = accountMap.get(a.getAccountId());
+            return Map.<String, Object>of(
+                "platformCode", a.getPlatformCode(),
+                "accountId", a.getAccountId(),
+                "accountName", acc != null ? acc.getAccountName() : ""
             );
-            var accountMap = accounts.stream().collect(java.util.stream.Collectors.toMap(
-                com.saleshub.entity.SysPlatformAccount::getId, a -> a));
-            var result = assignments.stream().map(a -> {
-                var acc = accountMap.get(a.getAccountId());
-                return Map.of(
-                    "platformCode", a.getPlatformCode(),
-                    "accountId", a.getAccountId(),
-                    "accountName", acc != null ? acc.getAccountName() : ""
-                );
-            }).toList();
-            return Result.ok(result);
-        }
-        return Result.ok(List.of());
+        }).toList();
     }
 
     @PostMapping
@@ -76,6 +83,24 @@ public class RecordController {
         var details = (JwtUserDetails) auth.getDetails();
         auditService.log(userId, details.getUsername(), "CREATE", "BizDailyRecord", null,
             "date=" + request.getRecordDate() + ", items=" + request.getItems().size());
+        dashboardService.evictCache();
+        return Result.ok();
+    }
+
+    /** 管理员业绩补录：可为指定员工补录任意日期的业绩 */
+    @PostMapping("/backfill")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result<?> backfill(Authentication auth, @Valid @RequestBody RecordSubmitRequest request) {
+        Long targetUserId = request.getUserId();
+        if (targetUserId == null) throw new com.saleshub.common.BusinessException("请选择员工");
+        if (request.getRecordDate() == null) throw new com.saleshub.common.BusinessException("请选择日期");
+        if (request.getRecordDate().isAfter(LocalDate.now().minusDays(1))) {
+            throw new com.saleshub.common.BusinessException("只能补录昨天及之前的业绩");
+        }
+        recordService.submitRecordsNoDateCheck(targetUserId, request);
+        var details = (JwtUserDetails) auth.getDetails();
+        auditService.log((Long) auth.getPrincipal(), details.getUsername(), "BACKFILL", "BizDailyRecord", null,
+            "targetUser=" + targetUserId + ", date=" + request.getRecordDate() + ", items=" + request.getItems().size());
         dashboardService.evictCache();
         return Result.ok();
     }

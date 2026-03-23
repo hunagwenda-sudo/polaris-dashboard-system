@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-[800px] mx-auto space-y-4">
+  <div class="space-y-4">
     <!-- Header -->
     <div class="flex items-center gap-3">
       <button @click="$router.back()" class="flex items-center justify-center w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] transition-colors cursor-pointer">

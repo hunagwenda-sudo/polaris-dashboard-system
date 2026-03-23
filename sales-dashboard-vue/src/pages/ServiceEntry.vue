@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-[680px] mx-auto">
+  <div class="max-w-[780px] mx-auto">
     <div class="bg-surface-raised rounded-2xl border border-white/[0.06] overflow-hidden">
       <div class="px-4 sm:px-7 pt-5 sm:pt-6 pb-4">
         <h3 class="text-[14px] font-semibold text-white tracking-tight font-sans">客服日报录入</h3>

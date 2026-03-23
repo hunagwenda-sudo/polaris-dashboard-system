@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-[1100px] mx-auto space-y-4">
+  <div class="space-y-4">
     <div>
       <h2 class="text-[15px] font-semibold text-white font-sans">个人设置</h2>
       <p class="text-[11px] text-trust-300 mt-0.5 font-sans">修改头像、手机号和密码</p>

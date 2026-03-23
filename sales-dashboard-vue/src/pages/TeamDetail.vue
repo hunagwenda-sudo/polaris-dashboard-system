@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-[1100px] mx-auto space-y-5">
+  <div class="space-y-5">
     <!-- Header -->
     <div class="flex items-center gap-3">
       <button @click="$router.push('/team')" class="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer">

@@ -27,19 +27,19 @@ public class PlatformAccountController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','PARTNER')")
     public Result<SysPlatformAccount> create(@RequestBody SysPlatformAccount account) {
         return Result.ok(accountService.create(account));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','PARTNER')")
     public Result<SysPlatformAccount> update(@PathVariable Long id, @RequestBody SysPlatformAccount account) {
         return Result.ok(accountService.update(id, account));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','PARTNER')")
     public Result<?> delete(@PathVariable Long id) {
         accountService.delete(id);
         return Result.ok();

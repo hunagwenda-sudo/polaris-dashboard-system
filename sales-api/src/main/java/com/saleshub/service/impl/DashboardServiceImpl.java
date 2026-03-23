@@ -369,11 +369,17 @@ public class DashboardServiceImpl implements DashboardService {
         LocalDate today = LocalDate.now();
         LocalDate yesterday = today.minusDays(1);
 
-        // 昨日最佳
+        // 只有 sales 角色参与滚动条排名和晋升预估
+        Set<Long> salesUserIds = userMapper.selectList(
+            new LambdaQueryWrapper<SysUser>().eq(SysUser::getRole, "sales").eq(SysUser::getStatus, "active").select(SysUser::getId)
+        ).stream().map(SysUser::getId).collect(Collectors.toSet());
+
+        // 昨日最佳（仅 sales）
         List<BizDailyRecord> yesterdayRecords = recordMapper.selectList(
             new LambdaQueryWrapper<BizDailyRecord>().eq(BizDailyRecord::getRecordDate, yesterday)
         );
         Map<Long, BigDecimal> yesterdayDgmv = yesterdayRecords.stream()
+            .filter(r -> salesUserIds.contains(r.getUserId()))
             .collect(Collectors.groupingBy(BizDailyRecord::getUserId,
                 Collectors.reducing(BigDecimal.ZERO, BizDailyRecord::getDgmv, BigDecimal::add)));
 
@@ -388,7 +394,7 @@ public class DashboardServiceImpl implements DashboardService {
         }
         result.put("totalYesterday", yesterdayDgmv.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add));
 
-        // 本周周榜第一
+        // 本周周榜第一（仅 sales）
         LocalDate weekStart = today.with(java.time.DayOfWeek.MONDAY);
         List<BizDailyRecord> weekRecords = recordMapper.selectList(
             new LambdaQueryWrapper<BizDailyRecord>()
@@ -396,6 +402,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .le(BizDailyRecord::getRecordDate, today)
         );
         Map<Long, BigDecimal> weekDgmv = weekRecords.stream()
+            .filter(r -> salesUserIds.contains(r.getUserId()))
             .collect(Collectors.groupingBy(BizDailyRecord::getUserId,
                 Collectors.reducing(BigDecimal.ZERO, BizDailyRecord::getDgmv, BigDecimal::add)));
         if (!weekDgmv.isEmpty()) {
@@ -424,6 +431,7 @@ public class DashboardServiceImpl implements DashboardService {
             String nearLevel = null;
             BigDecimal minGap = null;
             for (var entry : quarterDgmv.entrySet()) {
+                if (!salesUserIds.contains(entry.getKey())) continue;
                 String estimated = estimateLevelFromThresholds(entry.getValue(), thresholds, levels);
                 int idx = levels.indexOf(estimated);
                 boolean isMax = idx >= levels.size() - 1;
