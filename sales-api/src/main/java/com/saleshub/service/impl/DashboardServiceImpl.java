@@ -426,29 +426,20 @@ public class DashboardServiceImpl implements DashboardService {
         List<String> levels = extractLevelNames(thresholds);
 
         if (!quarterDgmv.isEmpty() && !thresholds.isEmpty()) {
-            // 找进度最高（gap最小且>0）的人
-            Long nearUserId = null;
-            String nearLevel = null;
-            BigDecimal minGap = null;
+            // 找今天刚达到晋升线的人：预估职级 > 当前确定职级
             for (var entry : quarterDgmv.entrySet()) {
                 if (!salesUserIds.contains(entry.getKey())) continue;
                 String estimated = estimateLevelFromThresholds(entry.getValue(), thresholds, levels);
-                int idx = levels.indexOf(estimated);
-                boolean isMax = idx >= levels.size() - 1;
-                if (!isMax) {
-                    BigDecimal nextThreshold = thresholds.get(idx).getValue();
-                    BigDecimal gap = nextThreshold.subtract(entry.getValue());
-                    if (gap.compareTo(BigDecimal.ZERO) > 0 && (minGap == null || gap.compareTo(minGap) < 0)) {
-                        minGap = gap;
-                        nearUserId = entry.getKey();
-                        nearLevel = levels.get(idx + 1); // 即将晋升到的职级
-                    }
+                SysUser user = userMapper.selectById(entry.getKey());
+                if (user == null) continue;
+                String currentLevel = user.getLevel() != null ? user.getLevel() : "K1";
+                int estimatedIdx = levels.indexOf(estimated);
+                int currentIdx = levels.indexOf(currentLevel);
+                if (estimatedIdx > currentIdx) {
+                    result.put("nearLevelUser", user.getName());
+                    result.put("nearLevelName", estimated);
+                    break; // 只播报一个
                 }
-            }
-            if (nearUserId != null) {
-                SysUser user = userMapper.selectById(nearUserId);
-                result.put("nearLevelUser", user != null ? user.getName() : "未知");
-                result.put("nearLevelName", nearLevel);
             }
         }
 

@@ -123,11 +123,11 @@ const autoMsgs = computed(() => {
     })
   }
 
-  // 模板2：职级晋升预估
+  // 模板2：职级晋升达标
   if (a.nearLevelUser && a.nearLevelName) {
     msgs.push({
-      highlight: `🚀突破在即！ ${a.nearLevelUser}`,
-      text: `实时预估数据已探顶 ${a.nearLevelName} 晋升线🎯稳扎稳打，把预估化为现实 ❗`
+      highlight: `🚀恭喜 ${a.nearLevelUser}`,
+      text: `本季度业绩已达 ${a.nearLevelName} 晋升线🎯继续保持，锁定晋级 ❗`
     })
   }
 
