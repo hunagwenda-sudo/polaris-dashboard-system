@@ -42,7 +42,7 @@
           <div class="hidden sm:block">
             <div class="flex items-center gap-1.5">
               <p class="text-[13px] font-semibold text-white font-sans leading-none">{{ auth.user?.name || auth.user?.username }}</p>
-              <LevelBadge :level="auth.user?.estimatedLevel || auth.user?.level" :role="auth.user?.role" />
+              <LevelBadge :level="auth.user?.estimatedLevel || auth.user?.level" :role="auth.user?.role" size="lg" />
             </div>
             <p class="text-[11px] text-trust-400 font-mono mt-0.5 leading-none">@{{ auth.user?.username }}</p>
           </div>

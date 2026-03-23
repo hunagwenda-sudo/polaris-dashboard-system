@@ -11,12 +11,14 @@ import com.saleshub.mapper.SysTeamMapper;
 import com.saleshub.mapper.SysUserMapper;
 import com.saleshub.service.TeamService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TeamServiceImpl implements TeamService {
@@ -70,10 +72,14 @@ public class TeamServiceImpl implements TeamService {
                 : BigDecimal.ZERO;
             map.put("completionRate", rate);
 
-            if (team.getLeaderId() != null) {
-                SysUser leader = userIdMap.get(team.getLeaderId());
-                map.put("leaderName", leader != null ? leader.getName() : null);
+            // 多负责人支持
+            map.put("leaderIds", parseLeaderIds(team));
+            List<String> leaderNames = new ArrayList<>();
+            for (Long lid : parseLeaderIds(team)) {
+                SysUser leader = userIdMap.get(lid);
+                if (leader != null) leaderNames.add(leader.getName());
             }
+            map.put("leaderName", leaderNames.isEmpty() ? null : String.join("、", leaderNames));
             result.add(map);
         }
         return result;
@@ -95,16 +101,17 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public SysTeam createTeam(TeamRequest request) {
-        // 校验负责人必须是合伙人
-        if (request.getLeaderId() != null) {
-            SysUser leader = userMapper.selectById(request.getLeaderId());
-            if (leader == null || !"partner".equals(leader.getRole())) {
-                throw new BusinessException("团队负责人必须是合伙人角色");
-            }
-        }
+        log.info("创建团队: name={}, leaderIds={}", request.getName(), request.getLeaderIds());
         SysTeam team = new SysTeam();
         team.setName(request.getName());
-        team.setLeaderId(request.getLeaderId());
+        // 兼容旧的单 leaderId 和新的多 leaderIds
+        if (request.getLeaderIds() != null && !request.getLeaderIds().isEmpty()) {
+            team.setLeaderIds(request.getLeaderIds().stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(",")));
+            team.setLeaderId(request.getLeaderIds().get(0)); // 兼容旧字段
+        } else if (request.getLeaderId() != null) {
+            team.setLeaderId(request.getLeaderId());
+            team.setLeaderIds(String.valueOf(request.getLeaderId()));
+        }
         team.setTargetDgmv(request.getTargetDgmv());
         teamMapper.insert(team);
         return team;
@@ -112,10 +119,17 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public SysTeam updateTeam(Long id, TeamRequest request) {
+        log.info("更新团队: id={}", id);
         SysTeam team = teamMapper.selectById(id);
         if (team == null) throw new BusinessException("团队不存在");
         if (request.getName() != null) team.setName(request.getName());
-        if (request.getLeaderId() != null) team.setLeaderId(request.getLeaderId());
+        if (request.getLeaderIds() != null) {
+            team.setLeaderIds(request.getLeaderIds().stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(",")));
+            team.setLeaderId(request.getLeaderIds().isEmpty() ? null : request.getLeaderIds().get(0));
+        } else if (request.getLeaderId() != null) {
+            team.setLeaderId(request.getLeaderId());
+            team.setLeaderIds(String.valueOf(request.getLeaderId()));
+        }
         if (request.getTargetDgmv() != null) team.setTargetDgmv(request.getTargetDgmv());
         teamMapper.updateById(team);
         return team;
@@ -123,6 +137,7 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public void addMember(Long teamId, Long userId) {
+        log.info("团队添加成员: teamId={}, userId={}", teamId, userId);
         SysTeam team = teamMapper.selectById(teamId);
         if (team == null) throw new BusinessException("团队不存在");
         SysUser user = userMapper.selectById(userId);
@@ -133,6 +148,7 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public void deleteTeam(Long id) {
+        log.info("删除团队: id={}", id);
         SysTeam team = teamMapper.selectById(id);
         if (team == null) throw new BusinessException("团队不存在");
         // 检查是否还有成员
@@ -164,16 +180,27 @@ public class TeamServiceImpl implements TeamService {
     @Override
     public boolean isTeamLeader(Long teamId, Long userId) {
         SysTeam team = teamMapper.selectById(teamId);
-        return team != null && userId.equals(team.getLeaderId());
+        if (team == null) return false;
+        // 优先检查 leaderIds
+        if (team.getLeaderIds() != null && !team.getLeaderIds().isBlank()) {
+            for (String idStr : team.getLeaderIds().split(",")) {
+                if (String.valueOf(userId).equals(idStr.trim())) return true;
+            }
+            return false;
+        }
+        return userId.equals(team.getLeaderId());
     }
 
     @Override
     public void removeMember(Long teamId, Long userId) {
+        log.info("团队移除成员: teamId={}, userId={}", teamId, userId);
         SysUser user = userMapper.selectById(userId);
         if (user == null) throw new BusinessException("用户不存在");
         if (!teamId.equals(user.getTeamId())) throw new BusinessException("该用户不在此团队");
-        user.setTeamId(null);
-        userMapper.updateById(user);
+        // updateById 默认不更新 null 字段，需用 UpdateWrapper 显式置空
+        userMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<SysUser>()
+            .eq(SysUser::getId, userId)
+            .set(SysUser::getTeamId, null));
     }
 
     @Override
@@ -260,5 +287,18 @@ public class TeamServiceImpl implements TeamService {
         LocalDate now = LocalDate.now();
         int month = ((now.getMonthValue() - 1) / 3) * 3 + 1;
         return LocalDate.of(now.getYear(), month, 1);
+    }
+
+    /** 解析团队的多负责人ID列表 */
+    private List<Long> parseLeaderIds(SysTeam team) {
+        if (team.getLeaderIds() != null && !team.getLeaderIds().isBlank()) {
+            List<Long> ids = new ArrayList<>();
+            for (String s : team.getLeaderIds().split(",")) {
+                try { ids.add(Long.parseLong(s.trim())); } catch (NumberFormatException ignored) {}
+            }
+            return ids;
+        }
+        if (team.getLeaderId() != null) return List.of(team.getLeaderId());
+        return List.of();
     }
 }

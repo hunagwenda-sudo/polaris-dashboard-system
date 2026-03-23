@@ -1,10 +1,10 @@
 <template>
   <div class="space-y-4">
-    <!-- 昨日战报 — bar chart -->
+    <!-- 昨日战报 — 自定义 HTML 条形图 -->
     <div ref="dailyChartRef" :class="[dailyFullscreen
       ? 'bg-surface-raised rounded-2xl border border-white/[0.06] overflow-hidden flex flex-col'
       : 'bg-surface-raised rounded-2xl border border-white/[0.06] overflow-hidden']">
-      <div class="px-6 pt-5 pb-1 flex items-center justify-between shrink-0">
+      <div class="px-6 pt-5 pb-3 flex items-center justify-between shrink-0">
         <div>
           <h3 :class="['font-semibold text-white tracking-tight font-sans', dailyFullscreen ? 'text-[16px]' : 'text-[13px]']">昨日战报</h3>
           <p class="text-[10px] text-trust-300 mt-0.5 font-sans">昨日全员 DGMV 总览</p>
@@ -14,7 +14,6 @@
           <div class="w-8 h-8 rounded-lg bg-accent/[0.08] border border-accent/[0.12] flex items-center justify-center">
             <svg v-bind="iconDefaults" class="w-4 h-4 text-accent"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
           </div>
-          <!-- 展开/收起 -->
           <button @click="toggleExpand"
             class="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
             :title="dailyFullscreen ? '收起' : '展开'">
@@ -23,8 +22,26 @@
           </button>
         </div>
       </div>
-      <div :class="dailyFullscreen ? 'flex-1 px-3 pb-4 overflow-y-auto' : 'px-3 pb-4 max-h-[360px] overflow-y-auto'">
-        <v-chart :option="dragonChartOption" autoresize :style="{ height: dailyFullscreen ? fullscreenChartHeight : chartHeight }" />
+      <div :class="dailyFullscreen ? 'flex-1 px-4 pb-4 overflow-y-auto' : 'px-4 pb-4 max-h-[360px] overflow-y-auto'">
+        <div class="space-y-1.5">
+          <div v-for="d in sortedDailyData" :key="d.userId"
+            class="flex items-center gap-2 group hover:bg-white/[0.02] rounded-lg px-2 py-1.5 transition-colors">
+            <!-- 名字 + 徽章 -->
+            <div class="flex items-center gap-1.5 shrink-0" :style="{ width: dailyFullscreen ? '140px' : '120px' }">
+              <span :class="['text-gray-200 font-medium font-sans truncate', dailyFullscreen ? 'text-[13px]' : 'text-[11px]']">{{ d.name }}</span>
+              <LevelBadge v-if="d.role === 'partner'" role="partner" />
+              <LevelBadge v-else :level="d.level || 'K1'" />
+            </div>
+            <!-- 条形 -->
+            <div class="flex-1 h-5 bg-white/[0.03] rounded-md overflow-hidden relative">
+              <div class="h-full rounded-md bg-gradient-to-r from-brand/40 to-brand/90 transition-all duration-700"
+                :style="{ width: barPercent(d.dgmv) + '%' }" />
+            </div>
+            <!-- 金额 -->
+            <span :class="['font-mono tabular-nums font-semibold text-trust-300 shrink-0', dailyFullscreen ? 'text-[12px] w-[70px]' : 'text-[10px] w-[60px]']" style="text-align:right">{{ fmt(d.dgmv) }}</span>
+          </div>
+        </div>
+        <div v-if="sortedDailyData.length === 0" class="py-10 text-center text-trust-300 text-[11px] font-sans">暂无数据</div>
       </div>
     </div>
 
@@ -64,17 +81,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import VChart from 'vue-echarts'
-import { use } from 'echarts/core'
-import { BarChart } from 'echarts/charts'
-import { GridComponent, TooltipComponent } from 'echarts/components'
-import { CanvasRenderer } from 'echarts/renderers'
 import { iconDefaults } from './icons.js'
 import LevelBadge from './LevelBadge.vue'
 import api from '../api'
 import { useAuthStore } from '../stores/auth'
-
-use([BarChart, GridComponent, TooltipComponent, CanvasRenderer])
 
 const auth = useAuthStore()
 const role = auth.user?.role || 'sales'
@@ -88,7 +98,6 @@ const fmt = (n) => {
   return '¥0'
 }
 
-// 生成假金额用于模糊显示，防止 DevTools 泄露真实数据
 const fakeAmount = () => `¥${(Math.random() * 8 + 1).toFixed(1)}万`
 
 const dailyData = ref([])
@@ -104,118 +113,19 @@ defineExpose({ dailyFullscreen })
 
 const dailyTotal = computed(() => dailyData.value.reduce((s, d) => s + Number(d.dgmv || 0), 0))
 
-// 按 id 排序
 const sortedDailyData = computed(() => {
   return [...dailyData.value].sort((a, b) => Number(a.userId) - Number(b.userId))
 })
 
-// 动态高度：每人 32px，最小 200px
-const chartHeight = computed(() => {
-  const count = sortedDailyData.value.length
-  return Math.max(200, count * 32) + 'px'
+// 计算条形百分比
+const maxDgmv = computed(() => {
+  const vals = sortedDailyData.value.map(d => Number(d.dgmv || 0))
+  return Math.max(...vals, 1)
 })
-
-// 全屏模式：每人更大的条形，充分利用空间
-const fullscreenChartHeight = computed(() => {
-  const count = sortedDailyData.value.length
-  return Math.max(400, count * 52) + 'px'
-})
-
-const dragonChartOption = computed(() => {
-  // ECharts Y 轴从下到上，所以 reverse 让第一名在最上面
-  const sorted = [...sortedDailyData.value].reverse()
-  const names = sorted.map(d => d.name)
-  const values = sorted.map(d => Number(d.dgmv || 0))
-  const count = sorted.length
-  const barWidth = count <= 8 ? 18 : count <= 14 ? 14 : 11
-  const isFs = dailyFullscreen.value
-  return {
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(59,130,246,0.06)' } },
-      backgroundColor: 'rgba(15,23,42,0.95)',
-      borderColor: 'rgba(59,130,246,0.15)',
-      borderWidth: 1,
-      padding: [10, 14],
-      textStyle: { color: '#E2E8F0', fontSize: 12, fontFamily: 'Inter' },
-      formatter: (params) => {
-        const d = params[0]
-        const v = d.value || 0
-        const display = v >= 10000 ? `¥${(v / 10000).toFixed(1)}万` : `¥${v.toFixed(0)}`
-        return `<span style="color:#94A3B8">${d.name}</span><br/><span style="font-family:JetBrains Mono;font-size:14px;font-weight:700;color:#3B82F6">${display}</span>`
-      },
-    },
-    grid: { left: isFs ? 90 : 70, right: isFs ? 80 : 60, top: 12, bottom: 28 },
-    xAxis: {
-      type: 'value',
-      axisLine: { show: false },
-      axisTick: { show: false },
-      splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)', type: 'dashed' } },
-      axisLabel: {
-        color: '#64748B',
-        fontSize: 10,
-        fontFamily: 'JetBrains Mono',
-        formatter: (v) => v === 0 ? '0' : v >= 10000 ? `${(v / 10000).toFixed(0)}万` : `¥${v}`,
-      },
-    },
-    yAxis: {
-      type: 'category',
-      data: names,
-      axisLine: { show: false },
-      axisTick: { show: false },
-      axisLabel: {
-        color: '#CBD5E1',
-        fontSize: isFs ? 14 : 11,
-        fontFamily: 'Inter',
-        fontWeight: 500,
-      },
-    },
-    series: [{
-      type: 'bar',
-      barWidth: isFs ? Math.max(24, barWidth + 8) : barWidth,
-      itemStyle: {
-        borderRadius: [0, 6, 6, 0],
-        color: {
-          type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
-          colorStops: [
-            { offset: 0, color: 'rgba(59,130,246,0.35)' },
-            { offset: 1, color: 'rgba(59,130,246,0.9)' },
-          ],
-        },
-      },
-      emphasis: {
-        itemStyle: {
-          color: {
-            type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
-            colorStops: [
-              { offset: 0, color: 'rgba(59,130,246,0.5)' },
-              { offset: 1, color: 'rgba(96,165,250,1)' },
-            ],
-          },
-          shadowColor: 'rgba(59,130,246,0.25)',
-          shadowBlur: 12,
-        },
-      },
-      label: {
-        show: true,
-        position: 'right',
-        formatter: (p) => {
-          const v = p.value
-          if (v >= 10000) return `¥${(v / 10000).toFixed(1)}万`
-          if (v > 0) return `¥${v}`
-          return '¥0'
-        },
-        color: '#94A3B8',
-        fontSize: isFs ? 13 : 10,
-        fontWeight: 600,
-        fontFamily: 'JetBrains Mono',
-      },
-      data: values,
-      animationDuration: 1200,
-      animationEasing: 'cubicOut',
-    }],
-  }
-})
+function barPercent(dgmv) {
+  const v = Number(dgmv || 0)
+  return Math.max((v / maxDgmv.value) * 100, 0)
+}
 
 onMounted(async () => {
   try {

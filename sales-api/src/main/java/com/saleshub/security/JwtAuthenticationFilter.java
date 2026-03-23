@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -36,7 +38,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Long userId = claims.get("userId", Long.class);
                 String username = claims.getSubject();
                 String role = claims.get("role", String.class);
-
                 var authorities = new ArrayList<SimpleGrantedAuthority>();
                 authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
                 Set<String> perms = permissionService.getPermissions(role);
@@ -45,6 +46,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 var auth = new UsernamePasswordAuthenticationToken(userId, null, authorities);
                 auth.setDetails(new JwtUserDetails(userId, username, role));
                 SecurityContextHolder.getContext().setAuthentication(auth);
+            } else {
+                log.warn("Token解析失败: uri={}", request.getRequestURI());
             }
         }
         filterChain.doFilter(request, response);

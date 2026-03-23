@@ -9,6 +9,7 @@ import com.saleshub.entity.SysUser;
 import com.saleshub.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -31,6 +33,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public Result<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        log.info("用户登录: username={}", request.getUsername());
         return Result.ok(authService.login(request));
     }
 
@@ -48,6 +51,7 @@ public class AuthController {
 
     @PostMapping("/avatar")
     public Result<Map<String, String>> uploadAvatar(Authentication auth, @RequestParam("file") MultipartFile file) throws IOException {
+        log.info("上传头像: userId={}, fileName={}", auth.getPrincipal(), file.getOriginalFilename());
         Path dir = Paths.get(uploadDir, "avatars").toAbsolutePath();
         String fileName = FileUploadUtil.save(file, dir);
         String url = "/uploads/avatars/" + fileName;

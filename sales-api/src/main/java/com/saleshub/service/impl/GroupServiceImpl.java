@@ -11,6 +11,7 @@ import com.saleshub.mapper.SysGroupMapper;
 import com.saleshub.mapper.SysUserMapper;
 import com.saleshub.service.GroupService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -18,6 +19,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GroupServiceImpl implements GroupService {
@@ -82,6 +84,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public SysGroup createGroup(GroupRequest request) {
+        log.info("创建小组: name={}, leaderId={}", request.getName(), request.getLeaderId());
         if (request.getLeaderId() == null) {
             throw new BusinessException("请选择组长");
         }
@@ -105,6 +108,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public SysGroup updateGroup(Long id, GroupRequest request) {
+        log.info("更新小组: id={}", id);
         SysGroup group = groupMapper.selectById(id);
         if (group == null) throw new BusinessException("小组不存在");
         if (request.getName() != null) group.setName(request.getName());
@@ -116,6 +120,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public void deleteGroup(Long id) {
+        log.info("删除小组: id={}", id);
         SysGroup group = groupMapper.selectById(id);
         if (group == null) throw new BusinessException("小组不存在");
         // 清空该小组所有成员的 groupId
@@ -131,6 +136,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public void addMember(Long groupId, Long userId) {
+        log.info("小组添加成员: groupId={}, userId={}", groupId, userId);
         SysGroup group = groupMapper.selectById(groupId);
         if (group == null) throw new BusinessException("小组不存在");
         SysUser user = userMapper.selectById(userId);
@@ -142,6 +148,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public void removeMember(Long userId) {
+        log.info("小组移除成员: userId={}", userId);
         SysUser user = userMapper.selectById(userId);
         if (user == null) throw new BusinessException("用户不存在");
         user.setGroupId(null);

@@ -4,6 +4,7 @@ import com.saleshub.common.Result;
 import com.saleshub.dto.ServiceRecordSubmitRequest;
 import com.saleshub.service.ServiceRecordService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/service-records")
 @RequiredArgsConstructor
@@ -24,6 +26,7 @@ public class ServiceRecordController {
     @PreAuthorize("hasRole('SERVICE')")
     public Result<?> submit(@AuthenticationPrincipal Long userId,
                             @RequestBody ServiceRecordSubmitRequest request) {
+        log.info("客服提交记录: userId={}, date={}", userId, request.getRecordDate());
         serviceRecordService.submitRecords(userId, request);
         return Result.ok();
     }

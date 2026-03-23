@@ -34,10 +34,11 @@ const num = computed(() => {
   return m ? parseInt(m[0]) : 1
 })
 
-const sizeClass = computed(() => props.size === 'md'
-  ? 'text-[11px] px-2 py-1 rounded-lg'
-  : 'text-[10px] px-1.5 py-0.5 rounded-md'
-)
+const sizeClass = computed(() => {
+  if (props.size === 'lg') return 'text-[13px] px-2.5 py-1 rounded-lg'
+  if (props.size === 'md') return 'text-[11px] px-2 py-1 rounded-lg'
+  return 'text-[10px] px-1.5 py-0.5 rounded-md'
+})
 
 const styles = [
   '',

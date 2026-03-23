@@ -7,6 +7,7 @@ import com.saleshub.entity.SysTeam;
 import com.saleshub.service.TeamService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/teams")
 @RequiredArgsConstructor
@@ -38,17 +40,20 @@ public class TeamController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public Result<SysTeam> create(@Valid @RequestBody TeamRequest request) {
+        log.info("创建团队: name={}, leaderId={}", request.getName(), request.getLeaderId());
         return Result.ok(teamService.createTeam(request));
     }
 
     @PutMapping("/{id}")
     public Result<SysTeam> update(@PathVariable Long id, @Valid @RequestBody TeamRequest request) {
+        log.info("更新团队: id={}", id);
         checkAdminOrTeamLeader(id);
         return Result.ok(teamService.updateTeam(id, request));
     }
 
     @PostMapping("/{id}/members")
     public Result<?> addMember(@PathVariable Long id, @RequestBody Map<String, Long> body) {
+        log.info("团队添加成员: teamId={}, userId={}", id, body.get("userId"));
         checkAdminOrTeamLeader(id);
         teamService.addMember(id, body.get("userId"));
         return Result.ok();
@@ -57,6 +62,7 @@ public class TeamController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public Result<?> delete(@PathVariable Long id) {
+        log.info("删除团队: id={}", id);
         teamService.deleteTeam(id);
         return Result.ok();
     }
@@ -75,6 +81,7 @@ public class TeamController {
 
     @DeleteMapping("/{id}/members/{userId}")
     public Result<?> removeMember(@PathVariable Long id, @PathVariable Long userId) {
+        log.info("团队移除成员: teamId={}, userId={}", id, userId);
         checkAdminOrTeamLeader(id);
         teamService.removeMember(id, userId);
         return Result.ok();

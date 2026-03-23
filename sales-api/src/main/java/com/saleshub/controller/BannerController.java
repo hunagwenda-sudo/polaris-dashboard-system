@@ -7,6 +7,7 @@ import com.saleshub.common.Result;
 import com.saleshub.entity.SysDict;
 import com.saleshub.mapper.SysDictMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/banner")
 @RequiredArgsConstructor
@@ -44,6 +46,7 @@ public class BannerController {
     @PostMapping("/image")
     @PreAuthorize("hasRole('ADMIN')")
     public Result<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) throws IOException {
+        log.info("上传Banner背景图: fileName={}", file.getOriginalFilename());
         Path dir = Paths.get(uploadDir, "banner").toAbsolutePath();
         String fileName = FileUploadUtil.save(file, dir);
         String url = "/uploads/banner/" + fileName;
@@ -72,6 +75,7 @@ public class BannerController {
     @DeleteMapping("/image")
     @PreAuthorize("hasRole('ADMIN')")
     public Result<?> clearImage() {
+        log.info("清除Banner背景图");
         SysDict dict = dictMapper.selectOne(
             new LambdaQueryWrapper<SysDict>()
                 .eq(SysDict::getType, "banner")
@@ -100,6 +104,7 @@ public class BannerController {
     @PutMapping("/marquee")
     @PreAuthorize("hasRole('ADMIN')")
     public Result<?> saveMarquee(@RequestBody Map<String, String> body) {
+        log.info("保存跑马灯文字");
         String text = body.getOrDefault("text", "").trim();
         SysDict dict = dictMapper.selectOne(
             new LambdaQueryWrapper<SysDict>()

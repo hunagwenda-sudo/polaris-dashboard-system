@@ -9,6 +9,7 @@ import com.saleshub.service.AuditService;
 import com.saleshub.service.RecordService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -19,6 +20,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/records")
 @RequiredArgsConstructor
@@ -79,6 +81,7 @@ public class RecordController {
     @PreAuthorize("hasAuthority('record:create')")
     public Result<?> submit(Authentication auth, @Valid @RequestBody RecordSubmitRequest request) {
         Long userId = (Long) auth.getPrincipal();
+        log.info("提交业绩记录: userId={}, date={}, items={}", userId, request.getRecordDate(), request.getItems().size());
         recordService.submitRecords(userId, request);
         var details = (JwtUserDetails) auth.getDetails();
         auditService.log(userId, details.getUsername(), "CREATE", "BizDailyRecord", null,
@@ -92,6 +95,7 @@ public class RecordController {
     @PreAuthorize("hasRole('ADMIN')")
     public Result<?> backfill(Authentication auth, @Valid @RequestBody RecordSubmitRequest request) {
         Long targetUserId = request.getUserId();
+        log.info("管理员业绩补录: targetUserId={}, date={}", targetUserId, request.getRecordDate());
         if (targetUserId == null) throw new com.saleshub.common.BusinessException("请选择员工");
         if (request.getRecordDate() == null) throw new com.saleshub.common.BusinessException("请选择日期");
         if (request.getRecordDate().isAfter(LocalDate.now().minusDays(1))) {
@@ -146,6 +150,7 @@ public class RecordController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('record:view_all')")
     public Result<?> delete(@PathVariable Long id) {
+        log.info("删除业绩记录: id={}", id);
         recordService.deleteRecord(id);
         dashboardService.evictCache();
         return Result.ok();
@@ -154,6 +159,7 @@ public class RecordController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public Result<?> update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        log.info("更新业绩记录: id={}", id);
         Object gmvObj = body.get("gmv");
         Object refundObj = body.get("refund");
         if (gmvObj == null || refundObj == null) throw new com.saleshub.common.BusinessException("gmv 和 refund 不能为空");

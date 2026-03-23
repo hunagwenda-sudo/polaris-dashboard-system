@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS sys_team (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     leader_id BIGINT,
+    leader_ids VARCHAR(255) DEFAULT NULL COMMENT '负责人ID列表(逗号分隔)',
     target_dgmv DECIMAL(14,2) DEFAULT 0,
     deleted TINYINT DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

@@ -2,6 +2,7 @@ package com.saleshub.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -9,6 +10,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+@Slf4j
 @Component
 public class JwtUtil {
 
@@ -22,6 +24,7 @@ public class JwtUtil {
     }
 
     public String generateToken(Long userId, String username, String role) {
+        log.info("生成Token: userId={}, username={}, role={}", userId, username, role);
         return Jwts.builder()
                 .subject(username)
                 .claim("userId", userId)
@@ -46,6 +49,7 @@ public class JwtUtil {
         try {
             return parseToken(token);
         } catch (JwtException | IllegalArgumentException e) {
+            log.warn("Token验证失败: {}", e.getMessage());
             return null;
         }
     }

@@ -2,6 +2,8 @@ package com.saleshub.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
+import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -18,5 +20,13 @@ public class WebConfig implements WebMvcConfigurer {
         String absPath = Paths.get(uploadDir).toAbsolutePath().toUri().toString();
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations(absPath);
+    }
+
+    @Override
+    public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
+        // 忽略 Accept 头中的非 JSON 类型，API 端点始终返回 JSON
+        configurer
+            .ignoreAcceptHeader(true)
+            .defaultContentType(MediaType.APPLICATION_JSON);
     }
 }

@@ -214,7 +214,7 @@
             <td class="px-3 py-2.5 text-[11px] text-gray-400 font-sans truncate">{{ teamMap[m.teamId] || '—' }}</td>
             <td class="px-3 py-2.5">
               <span v-if="m.role === 'admin' || m.role === 'partner'" class="text-[10px] text-trust-300 font-sans">—</span>
-              <span v-else class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-accent/[0.08] text-accent border border-accent/[0.12] font-mono">{{ m.level || 'K1' }}</span>
+              <LevelBadge v-else :level="m.level || 'K1'" />
             </td>
             <td class="px-3 py-2.5 text-[11px] text-gray-300 font-mono tabular-nums whitespace-nowrap">{{ m.phone || '—' }}</td>
             <td class="px-3 py-2.5 text-[11px] text-gray-300 font-mono tabular-nums whitespace-nowrap">{{ m.birthday || '—' }}</td>
@@ -257,6 +257,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { iconDefaults } from '../components/icons.js'
 import { useConfirm } from '../composables/useConfirm'
+import LevelBadge from '../components/LevelBadge.vue'
 import api from '../api'
 
 const { confirm } = useConfirm()

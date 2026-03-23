@@ -169,7 +169,12 @@ const route = useRoute()
 const teamId = route.params.id
 const auth = useAuthStore()
 const { confirm } = useConfirm()
-const canManage = computed(() => auth.user?.role === 'admin' || (team.value.leaderId === auth.user?.id))
+const canManage = computed(() => {
+  if (auth.user?.role === 'admin') return true
+  const uid = auth.user?.id
+  const ids = team.value.leaderIds || []
+  return ids.includes(uid) || team.value.leaderId === uid
+})
 
 const roleLabel = { admin: '管理员', partner: '合伙人', sales: '运营' }
 const roleBadge = {

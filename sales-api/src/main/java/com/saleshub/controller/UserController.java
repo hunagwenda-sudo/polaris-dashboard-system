@@ -10,12 +10,14 @@ import com.saleshub.service.AuditService;
 import com.saleshub.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -39,6 +41,7 @@ public class UserController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'PARTNER')")
     public Result<SysUser> create(@Valid @RequestBody UserCreateRequest request, Authentication auth) {
+        log.info("创建用户: username={}, role={}", request.getUsername(), request.getRole());
         SysUser user = userService.createUser(request);
         var details = (JwtUserDetails) auth.getDetails();
         auditService.log(details.getUserId(), details.getUsername(), "CREATE", "SysUser", user.getId(), "username=" + request.getUsername());
@@ -48,6 +51,7 @@ public class UserController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'PARTNER')")
     public Result<SysUser> update(@PathVariable Long id, @RequestBody UserUpdateRequest request, Authentication auth) {
+        log.info("更新用户: id={}", id);
         SysUser user = userService.updateUser(id, request);
         var details = (JwtUserDetails) auth.getDetails();
         auditService.log(details.getUserId(), details.getUsername(), "UPDATE", "SysUser", id, null);
@@ -57,6 +61,7 @@ public class UserController {
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('ADMIN', 'PARTNER')")
     public Result<?> toggleStatus(@PathVariable Long id, @RequestBody Map<String, String> body, Authentication auth) {
+        log.info("切换用户状态: id={}, status={}", id, body.get("status"));
         userService.toggleStatus(id, body.get("status"));
         var details = (JwtUserDetails) auth.getDetails();
         auditService.log(details.getUserId(), details.getUsername(), "UPDATE", "SysUser", id, "status=" + body.get("status"));
@@ -66,6 +71,7 @@ public class UserController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'PARTNER')")
     public Result<?> delete(@PathVariable Long id, Authentication auth) {
+        log.info("删除用户: id={}", id);
         userService.deleteUser(id);
         var details = (JwtUserDetails) auth.getDetails();
         auditService.log(details.getUserId(), details.getUsername(), "DELETE", "SysUser", id, null);
@@ -75,6 +81,7 @@ public class UserController {
     @PutMapping("/{id}/reset-password")
     @PreAuthorize("hasAnyRole('ADMIN', 'PARTNER')")
     public Result<?> resetPassword(@PathVariable Long id, Authentication auth) {
+        log.info("重置密码: userId={}", id);
         userService.resetPassword(id);
         var details = (JwtUserDetails) auth.getDetails();
         auditService.log(details.getUserId(), details.getUsername(), "RESET_PWD", "SysUser", id, null);
@@ -92,6 +99,7 @@ public class UserController {
     @PutMapping("/{id}/platforms")
     @PreAuthorize("hasAnyRole('ADMIN', 'PARTNER')")
     public Result<?> assignPlatforms(@PathVariable Long id, @RequestBody Map<String, Object> body, Authentication auth) {
+        log.info("分配用户渠道: userId={}", id);
         @SuppressWarnings("unchecked")
         java.util.List<Number> accountIds = (java.util.List<Number>) body.get("accountIds");
         java.util.List<Long> ids = accountIds == null ? java.util.List.of()

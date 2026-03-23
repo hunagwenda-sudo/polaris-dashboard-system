@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -56,6 +57,13 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Result<?> handleNoResource(NoResourceFoundException e) {
         return Result.error(404, "资源不存在");
+    }
+
+    @ExceptionHandler(HttpMessageNotWritableException.class)
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    public Result<?> handleNotWritable(HttpMessageNotWritableException e) {
+        log.warn("Content-Type mismatch: {}", e.getMessage());
+        return Result.error(406, "不支持的响应类型");
     }
 
     @ExceptionHandler(Exception.class)

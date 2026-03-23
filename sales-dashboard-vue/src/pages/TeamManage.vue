@@ -17,11 +17,15 @@
         <h3 class="text-[14px] font-semibold text-white font-sans">新建团队</h3>
         <input v-model="newTeam.name" placeholder="团队名称" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white placeholder-trust-400 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30" />
         <div>
-          <label class="text-[10px] text-trust-300 font-sans block mb-1">团队负责人（合伙人）</label>
-          <select v-model="newTeam.leaderId" class="w-full bg-trust-700 border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white font-sans focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer">
-            <option :value="null" class="bg-trust-700">— 暂不指定 —</option>
-            <option v-for="p in partners" :key="p.id" :value="Number(p.id)" class="bg-trust-700">{{ p.name }}</option>
-          </select>
+          <label class="text-[10px] text-trust-300 font-sans block mb-1">团队负责人（合伙人，可多选）</label>
+          <div class="flex flex-wrap gap-2 p-2 bg-white/[0.03] border border-white/[0.06] rounded-lg min-h-[38px]">
+            <label v-for="p in partners" :key="p.id" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-sans cursor-pointer transition-colors"
+              :class="newTeam.leaderIds.includes(Number(p.id)) ? 'bg-brand/20 text-brand-light border border-brand/30' : 'bg-white/[0.04] text-trust-300 border border-white/[0.06] hover:bg-white/[0.08]'">
+              <input type="checkbox" :value="Number(p.id)" v-model="newTeam.leaderIds" class="hidden" />
+              {{ p.name }}
+            </label>
+            <span v-if="partners.length === 0" class="text-[11px] text-trust-400 font-sans">暂无合伙人</span>
+          </div>
         </div>
         <div class="flex gap-3 justify-end">
           <button @click="showCreate = false" class="px-4 py-2 rounded-lg text-[12px] text-trust-300 hover:text-white cursor-pointer font-sans">取消</button>
@@ -39,12 +43,16 @@
           <input v-model="editForm.name" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white placeholder-trust-400 font-sans focus:outline-none focus:ring-2 focus:ring-brand/30" />
         </div>
         <div>
-          <label class="text-[10px] text-trust-300 font-sans block mb-1">团队负责人（合伙人）</label>
+          <label class="text-[10px] text-trust-300 font-sans block mb-1">团队负责人（合伙人，可多选）</label>
           <template v-if="isAdmin">
-            <select v-model="editForm.leaderId" class="w-full bg-trust-700 border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white font-sans focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer">
-              <option :value="null" class="bg-trust-700">— 暂不指定 —</option>
-              <option v-for="p in partners" :key="p.id" :value="Number(p.id)" class="bg-trust-700">{{ p.name }}</option>
-            </select>
+            <div class="flex flex-wrap gap-2 p-2 bg-white/[0.03] border border-white/[0.06] rounded-lg min-h-[38px]">
+              <label v-for="p in partners" :key="p.id" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-sans cursor-pointer transition-colors"
+                :class="editForm.leaderIds.includes(Number(p.id)) ? 'bg-brand/20 text-brand-light border border-brand/30' : 'bg-white/[0.04] text-trust-300 border border-white/[0.06] hover:bg-white/[0.08]'">
+                <input type="checkbox" :value="Number(p.id)" v-model="editForm.leaderIds" class="hidden" />
+                {{ p.name }}
+              </label>
+              <span v-if="partners.length === 0" class="text-[11px] text-trust-400 font-sans">暂无合伙人</span>
+            </div>
           </template>
           <template v-else>
             <div class="w-full bg-white/[0.02] border border-white/[0.04] rounded-lg px-4 py-2 text-[12px] text-gray-400 font-sans">{{ editLeaderName || '未指定' }}</div>
@@ -137,14 +145,19 @@ const displayTeams = computed(() => {
   const uid = auth.user?.id
   const tid = auth.user?.teamId
   // 合伙人：能看到自己作为负责人的团队，或自己所在的团队
-  return allTeams.value.filter(t => t.leaderId === uid || t.id === tid)
+  return allTeams.value.filter(t => {
+    const ids = t.leaderIds || []
+    return ids.includes(uid) || t.leaderId === uid || t.id === tid
+  })
 })
 
 // 是否是某个团队的负责人
 function canManageTeam(t) {
   if (!t) return false
   if (isAdmin.value) return true
-  return t.leaderId === auth.user?.id
+  const uid = auth.user?.id
+  const ids = t.leaderIds || []
+  return ids.includes(uid) || t.leaderId === uid
 }
 
 const subtitle = computed(() => {
@@ -154,10 +167,10 @@ const subtitle = computed(() => {
   return '查看所在团队信息和业绩概览'
 })
 const showCreate = ref(false)
-const newTeam = reactive({ name: '', leaderId: null })
+const newTeam = reactive({ name: '', leaderIds: [] })
 const showEdit = ref(false)
 const editTeamId = ref(null)
-const editForm = ref({ name: '', leaderId: null })
+const editForm = ref({ name: '', leaderIds: [] })
 const editLeaderName = ref('')
 const partners = ref([])
 
@@ -180,9 +193,9 @@ async function fetchTeams() {
 
 async function createTeam() {
   try {
-    await api.post('/teams', { name: newTeam.name, leaderId: newTeam.leaderId || null })
+    await api.post('/teams', { name: newTeam.name, leaderIds: newTeam.leaderIds.length > 0 ? newTeam.leaderIds : null })
     showCreate.value = false
-    newTeam.name = ''; newTeam.leaderId = null
+    newTeam.name = ''; newTeam.leaderIds = []
     fetchTeams()
   } catch { /* ignore */ }
 }
@@ -192,7 +205,7 @@ async function openEdit(team) {
   editTeamId.value = team.id
   editForm.value = {
     name: team.name,
-    leaderId: team.leaderId ? Number(team.leaderId) : null
+    leaderIds: (team.leaderIds || []).map(Number)
   }
   editLeaderName.value = team.leaderName || ''
   await nextTick()
@@ -201,7 +214,7 @@ async function openEdit(team) {
 
 async function updateTeam() {
   try {
-    await api.put(`/teams/${editTeamId.value}`, { name: editForm.value.name, leaderId: editForm.value.leaderId || null })
+    await api.put(`/teams/${editTeamId.value}`, { name: editForm.value.name, leaderIds: editForm.value.leaderIds.length > 0 ? editForm.value.leaderIds : null })
     showEdit.value = false
     fetchTeams()
   } catch { /* ignore */ }

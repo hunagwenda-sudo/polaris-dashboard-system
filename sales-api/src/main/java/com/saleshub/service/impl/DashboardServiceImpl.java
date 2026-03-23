@@ -87,10 +87,14 @@ public class DashboardServiceImpl implements DashboardService {
         String scope;
 
         if ("admin".equals(role)) {
-            // 管理员：所有团队目标之和，所有人的 DGMV
-            List<SysTeam> teams = teamMapper.selectList(null);
-            targetDgmv = teams.stream()
-                .map(t -> t.getTargetDgmv() != null ? t.getTargetDgmv() : BigDecimal.ZERO)
+            // 管理员：公司目标 = 所有 sales/partner 用户个人目标之和
+            List<SysUser> allBizUsers = userMapper.selectList(
+                new LambdaQueryWrapper<SysUser>()
+                    .in(SysUser::getRole, "sales", "partner")
+                    .eq(SysUser::getStatus, "active")
+            );
+            targetDgmv = allBizUsers.stream()
+                .map(u -> u.getTargetDgmv() != null ? u.getTargetDgmv() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             List<BizDailyRecord> records = recordMapper.selectList(
                 new LambdaQueryWrapper<BizDailyRecord>()
@@ -100,17 +104,18 @@ public class DashboardServiceImpl implements DashboardService {
             totalDgmv = records.stream().map(BizDailyRecord::getDgmv).reduce(BigDecimal.ZERO, BigDecimal::add);
             scope = "company";
         } else if ("partner".equals(role)) {
-            // 合伙人：自己团队的目标，团队成员的 DGMV
+            // 合伙人：团队目标 = 团队内成员个人目标之和
             Long teamId = user.getTeamId();
             if (teamId != null) {
-                SysTeam team = teamMapper.selectById(teamId);
-                targetDgmv = team != null && team.getTargetDgmv() != null ? team.getTargetDgmv() : BigDecimal.ZERO;
                 // 查团队所有销售/合伙人成员（排除 service）
                 List<SysUser> members = userMapper.selectList(
                     new LambdaQueryWrapper<SysUser>()
                         .eq(SysUser::getTeamId, teamId)
                         .in(SysUser::getRole, "sales", "partner")
                 );
+                targetDgmv = members.stream()
+                    .map(m -> m.getTargetDgmv() != null ? m.getTargetDgmv() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
                 List<Long> memberIds = members.stream().map(SysUser::getId).toList();
                 if (!memberIds.isEmpty()) {
                     List<BizDailyRecord> records = recordMapper.selectList(
@@ -202,6 +207,8 @@ public class DashboardServiceImpl implements DashboardService {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("userId", u.getId());
             map.put("name", u.getName() != null ? u.getName() : "未知");
+            map.put("level", u.getLevel() != null ? u.getLevel() : "K1");
+            map.put("role", u.getRole());
             map.put("dgmv", userDgmv.getOrDefault(u.getId(), BigDecimal.ZERO));
             return map;
         }).toList();
@@ -308,11 +315,16 @@ public class DashboardServiceImpl implements DashboardService {
                 .map(m -> userDgmvMap.getOrDefault(m.getId(), BigDecimal.ZERO))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+            // 团队目标 = 成员个人季度目标之和
+            BigDecimal targetDgmv = members.stream()
+                .map(m -> m.getTargetDgmv() != null ? m.getTargetDgmv() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("teamId", team.getId());
             map.put("teamName", team.getName());
             map.put("quarterDgmv", totalDgmv);
-            map.put("targetDgmv", team.getTargetDgmv());
+            map.put("targetDgmv", targetDgmv);
             map.put("memberCount", members.size());
             result.add(map);
         }

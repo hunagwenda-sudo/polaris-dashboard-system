@@ -7,6 +7,7 @@ import com.saleshub.mapper.SysPlatformAccountMapper;
 import com.saleshub.mapper.SysUserPlatformMapper;
 import com.saleshub.service.UserPlatformService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserPlatformServiceImpl implements UserPlatformService {
@@ -33,6 +35,7 @@ public class UserPlatformServiceImpl implements UserPlatformService {
     @Override
     @Transactional
     public void assign(Long userId, List<Long> accountIds) {
+        log.info("分配用户渠道: userId={}, accountIds={}", userId, accountIds);
         // 查出当前分配
         List<SysUserPlatform> existing = listByUserId(userId);
         Set<Long> existingIds = existing.stream().map(SysUserPlatform::getAccountId).collect(Collectors.toSet());

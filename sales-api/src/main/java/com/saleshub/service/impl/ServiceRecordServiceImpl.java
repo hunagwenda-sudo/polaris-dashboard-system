@@ -11,6 +11,7 @@ import com.saleshub.mapper.BizServiceRecordMapper;
 import com.saleshub.mapper.SysUserMapper;
 import com.saleshub.service.ServiceRecordService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ServiceRecordServiceImpl implements ServiceRecordService {
@@ -32,6 +34,7 @@ public class ServiceRecordServiceImpl implements ServiceRecordService {
     @Override
     @Transactional
     public void submitRecords(Long userId, ServiceRecordSubmitRequest request) {
+        log.info("客服提交记录: userId={}, date={}, items={}", userId, request.getRecordDate(), request.getItems().size());
         if (request.getRecordDate() != null && request.getRecordDate().isAfter(LocalDate.now())) {
             throw new BusinessException("日期不能大于今天");
         }

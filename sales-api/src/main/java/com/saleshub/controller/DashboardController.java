@@ -3,6 +3,7 @@ package com.saleshub.controller;
 import com.saleshub.common.Result;
 import com.saleshub.service.DashboardService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
@@ -71,6 +73,7 @@ public class DashboardController {
     @PostMapping("/quarterly/generate")
     @PreAuthorize("hasRole('ADMIN')")
     public Result<?> generateSnapshot(@RequestBody Map<String, String> body) {
+        log.info("手动生成季度快照: quarter={}", body.get("quarter"));
         String quarter = body.get("quarter");
         if (quarter == null || quarter.isBlank()) throw new com.saleshub.common.BusinessException("请指定季度");
         int count = dashboardService.generateQuarterlySnapshot(quarter);

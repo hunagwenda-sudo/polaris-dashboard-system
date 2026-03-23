@@ -10,6 +10,7 @@ import com.saleshub.entity.SysUser;
 import com.saleshub.mapper.SysUserMapper;
 import com.saleshub.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -17,6 +18,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -44,6 +46,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public SysUser createUser(UserCreateRequest request) {
+        log.info("创建用户: username={}, role={}, teamId={}", request.getUsername(), request.getRole(), request.getTeamId());
         Long exists = userMapper.selectCount(
             new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, request.getUsername())
         );
@@ -79,6 +82,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public SysUser updateUser(Long id, UserUpdateRequest request) {
+        log.info("更新用户: id={}", id);
         SysUser user = userMapper.selectById(id);
         if (user == null) throw new BusinessException("用户不存在");
 
@@ -107,6 +111,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void toggleStatus(Long id, String status) {
+        log.info("切换用户状态: id={}, status={}", id, status);
         SysUser user = userMapper.selectById(id);
         if (user == null) throw new BusinessException("用户不存在");
         if ("admin".equals(user.getRole())) throw new BusinessException("不允许禁用管理员账号");
@@ -117,6 +122,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(Long id) {
+        log.info("删除用户: id={}", id);
         SysUser user = userMapper.selectById(id);
         if (user == null) throw new BusinessException("用户不存在");
         if ("admin".equals(user.getRole())) throw new BusinessException("不允许删除管理员账号");
@@ -125,6 +131,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void resetPassword(Long id) {
+        log.info("重置密码: userId={}", id);
         SysUser user = userMapper.selectById(id);
         if (user == null) throw new BusinessException("用户不存在");
         String phone = user.getPhone();

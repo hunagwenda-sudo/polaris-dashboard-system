@@ -6,11 +6,13 @@ import com.saleshub.entity.SysPlatformAccount;
 import com.saleshub.mapper.SysPlatformAccountMapper;
 import com.saleshub.service.PlatformAccountService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PlatformAccountServiceImpl implements PlatformAccountService {
@@ -37,6 +39,7 @@ public class PlatformAccountServiceImpl implements PlatformAccountService {
 
     @Override
     public SysPlatformAccount create(SysPlatformAccount account) {
+        log.info("创建平台账号: platform={}, name={}", account.getPlatformCode(), account.getAccountName());
         if (account.getStatus() == null) account.setStatus("active");
         if (account.getSort() == null) account.setSort(0);
         account.setCreatedAt(LocalDateTime.now());
@@ -46,6 +49,7 @@ public class PlatformAccountServiceImpl implements PlatformAccountService {
 
     @Override
     public SysPlatformAccount update(Long id, SysPlatformAccount account) {
+        log.info("更新平台账号: id={}", id);
         SysPlatformAccount existing = accountMapper.selectById(id);
         if (existing == null) throw new BusinessException("账号不存在");
         if (account.getAccountName() != null) existing.setAccountName(account.getAccountName());
@@ -57,6 +61,7 @@ public class PlatformAccountServiceImpl implements PlatformAccountService {
 
     @Override
     public void delete(Long id) {
+        log.info("删除平台账号: id={}", id);
         SysPlatformAccount existing = accountMapper.selectById(id);
         if (existing == null) throw new BusinessException("账号不存在");
         accountMapper.deleteById(id);

@@ -6,10 +6,12 @@ import com.saleshub.entity.SysDict;
 import com.saleshub.mapper.SysDictMapper;
 import com.saleshub.service.DictService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DictServiceImpl implements DictService {
@@ -44,6 +46,7 @@ public class DictServiceImpl implements DictService {
 
     @Override
     public SysDict create(SysDict dict) {
+        log.info("创建字典项: type={}, code={}", dict.getType(), dict.getCode());
         if (dict.getStatus() == null) dict.setStatus("active");
         if (dict.getSort() == null) dict.setSort(0);
         // 忽略软删除查找（UNIQUE KEY 不含 deleted，需处理软删除后重建的场景）
@@ -63,6 +66,7 @@ public class DictServiceImpl implements DictService {
 
     @Override
     public SysDict update(Long id, SysDict dict) {
+        log.info("更新字典项: id={}", id);
         SysDict existing = dictMapper.selectById(id);
         if (existing == null) throw new BusinessException("字典项不存在");
         if (dict.getType() != null) existing.setType(dict.getType());
@@ -77,6 +81,7 @@ public class DictServiceImpl implements DictService {
 
     @Override
     public void delete(Long id) {
+        log.info("删除字典项: id={}", id);
         SysDict existing = dictMapper.selectById(id);
         if (existing == null) throw new BusinessException("字典项不存在");
         dictMapper.deleteById(id);

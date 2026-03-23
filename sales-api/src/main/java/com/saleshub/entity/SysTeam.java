@@ -12,6 +12,7 @@ public class SysTeam {
     private Long id;
     private String name;
     private Long leaderId;
+    private String leaderIds;
     private BigDecimal targetDgmv;
 
     @TableLogic

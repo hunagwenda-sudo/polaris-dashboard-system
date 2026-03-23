@@ -11,6 +11,7 @@ import com.saleshub.mapper.BizDailyRecordMapper;
 import com.saleshub.mapper.SysUserMapper;
 import com.saleshub.service.RecordService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RecordServiceImpl implements RecordService {
@@ -33,6 +35,7 @@ public class RecordServiceImpl implements RecordService {
     @Override
     @Transactional
     public void submitRecords(Long userId, RecordSubmitRequest request) {
+        log.info("提交业绩: userId={}, date={}, items={}", userId, request.getRecordDate(), request.getItems().size());
         if (request.getRecordDate() != null && !request.getRecordDate().isBefore(LocalDate.now())) {
             throw new BusinessException("只能录入昨天及之前的业绩");
         }
@@ -42,6 +45,7 @@ public class RecordServiceImpl implements RecordService {
     @Override
     @Transactional
     public void submitRecordsNoDateCheck(Long userId, RecordSubmitRequest request) {
+        log.info("补录业绩(无日期校验): userId={}, date={}", userId, request.getRecordDate());
         doSubmit(userId, request);
     }
 
@@ -140,6 +144,7 @@ public class RecordServiceImpl implements RecordService {
 
     @Override
     public void updateRecord(Long id, java.math.BigDecimal gmv, java.math.BigDecimal refund, String accountNote) {
+        log.info("更新业绩记录: id={}, gmv={}, refund={}", id, gmv, refund);
         BizDailyRecord record = recordMapper.selectById(id);
         if (record == null) throw new BusinessException("记录不存在");
         record.setGmv(gmv);
@@ -151,6 +156,7 @@ public class RecordServiceImpl implements RecordService {
 
     @Override
     public void deleteRecord(Long id) {
+        log.info("删除业绩记录: id={}", id);
         BizDailyRecord record = recordMapper.selectById(id);
         if (record == null) throw new BusinessException("记录不存在");
         recordMapper.deleteById(id); // 逻辑删除

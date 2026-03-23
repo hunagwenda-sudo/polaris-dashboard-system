@@ -164,22 +164,22 @@
         <div class="relative z-10">
           <div class="flex items-center justify-between mb-1">
             <div class="flex items-center gap-2">
-              <span class="text-[11px] font-semibold text-trust-300 uppercase tracking-[0.08em] font-sans">职级晋升进度</span>
-              <span :class="['inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold border font-mono', levelBadgeClass]">{{ levelInfo.currentLevel }} → {{ levelInfo.nextLevel }}</span>
-              <span v-if="levelInfo.lastLevel && levelInfo.lastLevel !== 'K1'" class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-white/[0.04] text-trust-300 border border-white/[0.06] font-sans">上季 {{ levelInfo.lastLevel }}</span>
+              <span class="text-[13px] font-semibold text-trust-300 uppercase tracking-[0.08em] font-sans">职级晋升进度</span>
+              <span :class="['inline-flex items-center px-2 py-0.5 rounded-md text-[13px] font-bold border font-mono', levelBadgeClass]">{{ levelInfo.currentLevel }} → {{ levelInfo.nextLevel }}</span>
+              <span v-if="levelInfo.lastLevel && levelInfo.lastLevel !== 'K1'" class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[12px] font-semibold bg-white/[0.04] text-trust-300 border border-white/[0.06] font-sans">上季 {{ levelInfo.lastLevel }}</span>
             </div>
             <div class="flex items-baseline gap-1">
-              <span :class="['text-[26px] font-extrabold font-mono tabular-nums leading-none', levelPctColor]">{{ animatedPctDisplay }}</span>
-              <span class="text-[12px] font-medium text-trust-300 font-mono">%</span>
+              <span :class="['text-[32px] font-extrabold font-mono tabular-nums leading-none', levelPctColor]">{{ animatedPctDisplay }}</span>
+              <span class="text-[14px] font-medium text-trust-300 font-mono">%</span>
             </div>
           </div>
           <div class="relative mt-3 mb-1">
-            <div class="flex justify-between text-[10px] font-mono font-bold px-0.5">
+            <div class="flex justify-between text-[12px] font-mono font-bold px-0.5">
               <span :class="levelTextColor">{{ levelInfo.currentLevel }}</span>
               <span class="text-trust-300">{{ levelInfo.nextLevel }}</span>
             </div>
           </div>
-          <div class="w-full h-3.5 bg-white/[0.04] rounded-full overflow-hidden relative border border-white/[0.03]">
+          <div class="w-full h-5 bg-white/[0.04] rounded-full overflow-hidden relative border border-white/[0.03]">
             <div class="absolute inset-0 rounded-full" style="box-shadow: inset 0 1px 3px rgba(0,0,0,0.3)" />
             <div class="h-full rounded-full relative overflow-hidden transition-all duration-[2000ms] ease-out" :style="{ width: animatedPct + '%' }">
               <div :class="['absolute inset-0', levelBarGradient]" />
@@ -191,17 +191,17 @@
           <div class="flex items-center justify-between mt-4 gap-3">
             <div class="flex items-center gap-4">
               <div class="flex items-center gap-1.5">
-                <div :class="['w-2 h-2 rounded-full animate-pulse', levelDotBg]" />
-                <span class="text-[11px] text-trust-300 font-sans">季度累计</span>
-                <span :class="['text-[13px] font-bold font-mono', levelAccentColor]">¥{{ fmtWan(levelInfo.totalDgmv) }}万</span>
+                <div :class="['w-2.5 h-2.5 rounded-full animate-pulse', levelDotBg]" />
+                <span class="text-[13px] text-trust-300 font-sans">季度累计</span>
+                <span :class="['text-[15px] font-bold font-mono', levelAccentColor]">¥{{ fmtWan(levelInfo.totalDgmv) }}万</span>
               </div>
               <div class="flex items-center gap-1.5">
-                <div class="w-2 h-2 rounded-full bg-accent/60" />
-                <span class="text-[11px] text-trust-300 font-sans">距{{ levelInfo.nextLevel }}还差</span>
-                <span class="text-[13px] font-bold text-accent font-mono">¥{{ fmtWan(levelInfo.gap) }}万</span>
+                <div class="w-2.5 h-2.5 rounded-full bg-accent/60" />
+                <span class="text-[13px] text-trust-300 font-sans">距{{ levelInfo.nextLevel }}还差</span>
+                <span class="text-[15px] font-bold text-accent font-mono">¥{{ fmtWan(levelInfo.gap) }}万</span>
               </div>
             </div>
-            <p class="text-[11px] text-trust-300 font-sans">
+            <p class="text-[13px] text-trust-300 font-sans">
               实时预估 <span :class="['font-semibold font-mono', levelTextColor]">{{ levelInfo.estimatedLevel }}</span>
             </p>
           </div>
