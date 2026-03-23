@@ -13,7 +13,7 @@ services:
       - mysql_data:/var/lib/mysql
       - ./sales-api/src/main/resources/db:/docker-entrypoint-initdb.d/sql:ro
       - ./deploy/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --innodb-buffer-pool-size=128M --key-buffer-size=16M --table-open-cache=200 --performance-schema=OFF
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASSWORD:-changeme}"]
       interval: 10s
@@ -28,6 +28,7 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -39,7 +40,7 @@ services:
     build: ./sales-api
     restart: always
     environment:
-      JAVA_OPTS: "-Xms256m -Xmx512m"
+      JAVA_OPTS: "-Xms128m -Xmx384m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
       DB_USERNAME: root
       DB_PASSWORD: ${DB_PASSWORD:-changeme}
       JWT_SECRET: ${JWT_SECRET:-SalesHubJwtSecretKey2025ForTokenSigningMustBeLongEnough!!}
