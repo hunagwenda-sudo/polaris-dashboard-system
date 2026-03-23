@@ -16,7 +16,7 @@ const routes = [
   { path: '/profile', name: 'profile', component: () => import('../pages/Profile.vue') },
   { path: '/change-password', name: 'changePassword', component: () => import('../pages/ChangePassword.vue') },
   { path: '/platforms', name: 'platforms', component: () => import('../pages/PlatformManage.vue'), meta: { roles: ['admin', 'partner'] } },
-  { path: '/backfill', name: 'backfill', component: () => import('../pages/BackfillEntry.vue'), meta: { roles: ['admin'] } },
+  { path: '/backfill', name: 'backfill', component: () => import('../pages/BackfillEntry.vue'), meta: { roles: ['admin', 'partner'] } },
   { path: '/level-config', name: 'levelConfig', component: () => import('../pages/LevelConfig.vue'), meta: { roles: ['admin'] } },
   { path: '/quarterly-report', name: 'quarterlyReport', component: () => import('../pages/QuarterlyReport.vue'), meta: { roles: ['admin'] } },
 ]
