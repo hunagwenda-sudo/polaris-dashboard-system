@@ -79,7 +79,7 @@
             <td class="px-4 py-3">
               <div class="flex items-center justify-end gap-2">
                 <span v-if="editingTarget !== m.id" class="text-[12px] text-gray-300 font-mono tabular-nums">{{ fmtTarget(m.targetDgmv) }}</span>
-                <input v-else v-model.number="editTargetVal" type="number" min="0" step="10000" @keyup.enter="saveTarget(m)" @keyup.escape="editingTarget = null" class="w-24 bg-white/[0.04] border border-brand/[0.3] rounded-lg px-2 py-1 text-[11px] text-white font-mono focus:outline-none focus:ring-2 focus:ring-brand/30" />
+                <MoneyInput v-else v-model="editTargetVal" @keyup.enter="saveTarget(m)" @keyup.escape="editingTarget = null" class="w-28 bg-white/[0.04] border border-brand/[0.3] rounded-lg px-2 py-1 text-[11px] text-white font-mono focus:outline-none focus:ring-2 focus:ring-brand/30" />
                 <button v-if="canManage && editingTarget !== m.id" @click.stop="startEditTarget(m)" class="text-[9px] text-brand-light hover:text-white cursor-pointer font-sans opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">设置</button>
                 <template v-else-if="canManage && editingTarget === m.id">
                   <button @click.stop="saveTarget(m)" class="text-[9px] text-success-light hover:text-white cursor-pointer font-sans">确定</button>
@@ -163,6 +163,7 @@ import { useRoute } from 'vue-router'
 import { iconDefaults } from '../components/icons.js'
 import { useAuthStore } from '../stores/auth'
 import { useConfirm } from '../composables/useConfirm'
+import MoneyInput from '../components/MoneyInput.vue'
 import api from '../api'
 
 const route = useRoute()
@@ -209,8 +210,9 @@ function startEditTarget(m) {
 
 async function saveTarget(m) {
   try {
-    await api.put(`/users/${m.id}`, { targetDgmv: editTargetVal.value })
-    m.targetDgmv = editTargetVal.value
+    const val = Number(String(editTargetVal.value).replace(/,/g, '')) || 0
+    await api.put(`/users/${m.id}`, { targetDgmv: val })
+    m.targetDgmv = val
     editingTarget.value = null
   } catch { /* ignore */ }
 }

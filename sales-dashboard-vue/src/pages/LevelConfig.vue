@@ -22,7 +22,7 @@
         </div>
         <div class="flex-1 relative">
           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] text-trust-300 font-mono">¥</span>
-          <input v-model.number="item.amount" type="number" min="0" step="10000"
+          <MoneyInput v-model="item.amount"
             class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg pl-7 pr-4 py-2.5 text-[13px] text-white font-mono tabular-nums focus:outline-none focus:ring-2 focus:ring-brand/30" />
         </div>
         <button v-if="levels.length > 1" @click="removeLevel(i)"
@@ -62,6 +62,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import MoneyInput from '../components/MoneyInput.vue'
 import api from '../api'
 
 const levels = ref([])

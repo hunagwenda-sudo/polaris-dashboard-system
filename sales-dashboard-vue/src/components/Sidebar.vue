@@ -90,7 +90,7 @@ const navGroups = [
       { name: 'dashboard', to: '/', label: '销售大盘看板', icon: IconGrid, roles: ['admin', 'partner', 'sales'] },
       { name: 'dataentry', to: '/data-entry', label: '昨日业绩录入', icon: IconEdit, roles: ['partner', 'sales'] },
       { name: 'serviceentry', to: '/service-entry', label: '客服日报录入', icon: IconHeadphones, roles: ['service'] },
-      { name: 'backfill', to: '/backfill', label: '业绩补录', icon: IconClipboard, roles: ['admin'] },
+      { name: 'backfill', to: '/backfill', label: '业绩补录', icon: IconClipboard, roles: ['admin', 'partner'] },
       { name: 'records', to: '/records', label: '业绩查看', icon: IconFile, roles: ['admin', 'partner', 'sales'] },
       { name: 'serviceRecords', to: '/service-records', label: '客服业绩查看', icon: IconHeadphones, roles: ['admin', 'partner', 'service'] },
     ],

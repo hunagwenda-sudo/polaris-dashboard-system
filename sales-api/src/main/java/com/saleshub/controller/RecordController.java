@@ -50,9 +50,9 @@ public class RecordController {
         return Result.ok(buildPlatformList(userId));
     }
 
-    /** 管理员查看指定用户的渠道分配（用于业绩补录） */
+    /** 管理员/合伙人查看指定用户的渠道分配（用于业绩补录） */
     @GetMapping("/user-platforms/{userId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','PARTNER')")
     public Result<?> userPlatforms(@PathVariable Long userId) {
         return Result.ok(buildPlatformList(userId));
     }
@@ -90,9 +90,9 @@ public class RecordController {
         return Result.ok();
     }
 
-    /** 管理员业绩补录：可为指定员工补录任意日期的业绩 */
+    /** 管理员/合伙人业绩补录：可为指定员工补录任意日期的业绩 */
     @PostMapping("/backfill")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','PARTNER')")
     public Result<?> backfill(Authentication auth, @Valid @RequestBody RecordSubmitRequest request) {
         Long targetUserId = request.getUserId();
         log.info("管理员业绩补录: targetUserId={}, date={}", targetUserId, request.getRecordDate());
@@ -157,9 +157,18 @@ public class RecordController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public Result<?> update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    @PreAuthorize("hasAuthority('record:view')")
+    public Result<?> update(@PathVariable Long id, @RequestBody Map<String, Object> body, Authentication auth) {
         log.info("更新业绩记录: id={}", id);
+        // 非管理员只能修改自己的记录
+        var details = (JwtUserDetails) auth.getDetails();
+        if (!"admin".equals(details.getRole())) {
+            BizDailyRecord existing = recordService.getById(id);
+            if (existing == null) throw new com.saleshub.common.BusinessException("记录不存在");
+            if (!existing.getUserId().equals(details.getUserId())) {
+                throw new com.saleshub.common.BusinessException("只能修改自己的业绩记录");
+            }
+        }
         Object gmvObj = body.get("gmv");
         Object refundObj = body.get("refund");
         if (gmvObj == null || refundObj == null) throw new com.saleshub.common.BusinessException("gmv 和 refund 不能为空");

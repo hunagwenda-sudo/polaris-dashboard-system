@@ -155,6 +155,11 @@ public class RecordServiceImpl implements RecordService {
     }
 
     @Override
+    public BizDailyRecord getById(Long id) {
+        return recordMapper.selectById(id);
+    }
+
+    @Override
     public void deleteRecord(Long id) {
         log.info("删除业绩记录: id={}", id);
         BizDailyRecord record = recordMapper.selectById(id);

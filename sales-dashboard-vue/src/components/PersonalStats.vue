@@ -359,6 +359,7 @@ const adminSideCards = computed(() => {
 const scopeLabel = computed(() => {
   const s = stats.scope
   if (s === 'company') return '全公司'
+  if (s === 'group') return '我的小组'
   if (s === 'team') return '我的团队'
   return '我的'
 })

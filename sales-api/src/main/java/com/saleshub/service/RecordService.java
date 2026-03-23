@@ -16,4 +16,5 @@ public interface RecordService {
     void deleteRecord(Long id);
     void updateRecord(Long id, java.math.BigDecimal gmv, java.math.BigDecimal refund, String accountNote);
     java.util.List<java.util.Map<String, Object>> getUnfilledUsers(LocalDate date);
+    BizDailyRecord getById(Long id);
 }

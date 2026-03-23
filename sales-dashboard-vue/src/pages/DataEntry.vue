@@ -55,9 +55,9 @@
                     <div class="hidden sm:flex items-center gap-2">
                       <span class="text-[11px] text-gray-300 font-sans truncate">{{ row.accountName }}</span>
                     </div>
-                    <input type="number" placeholder="GMV" v-model="row.gmv"
+                    <MoneyInput placeholder="GMV" v-model="row.gmv"
                       class="bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors tabular-nums" />
-                    <input type="number" placeholder="退款" v-model="row.refund"
+                    <MoneyInput placeholder="退款" v-model="row.refund"
                       class="bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-[12px] text-white placeholder-trust-400 font-mono focus:outline-none focus:ring-2 focus:ring-danger/30 transition-colors tabular-nums" />
                   </div>
                 </div>
@@ -86,6 +86,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import MoneyInput from '../components/MoneyInput.vue'
 import api from '../api'
 
 const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Shanghai' })

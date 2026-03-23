@@ -104,13 +104,13 @@ public class DashboardServiceImpl implements DashboardService {
             totalDgmv = records.stream().map(BizDailyRecord::getDgmv).reduce(BigDecimal.ZERO, BigDecimal::add);
             scope = "company";
         } else if ("partner".equals(role)) {
-            // 合伙人：团队目标 = 团队内成员个人目标之和
-            Long teamId = user.getTeamId();
-            if (teamId != null) {
-                // 查团队所有销售/合伙人成员（排除 service）
+            // 合伙人：小组目标 = 小组内成员个人目标之和
+            Long groupId = user.getGroupId();
+            if (groupId != null) {
+                // 查小组所有销售/合伙人成员（排除 service）
                 List<SysUser> members = userMapper.selectList(
                     new LambdaQueryWrapper<SysUser>()
-                        .eq(SysUser::getTeamId, teamId)
+                        .eq(SysUser::getGroupId, groupId)
                         .in(SysUser::getRole, "sales", "partner")
                 );
                 targetDgmv = members.stream()
@@ -132,7 +132,7 @@ public class DashboardServiceImpl implements DashboardService {
                 targetDgmv = BigDecimal.ZERO;
                 totalDgmv = BigDecimal.ZERO;
             }
-            scope = "team";
+            scope = "group";
         } else {
             // 运营：个人目标，个人 DGMV
             targetDgmv = user.getTargetDgmv() != null ? user.getTargetDgmv() : BigDecimal.ZERO;

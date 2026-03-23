@@ -31,12 +31,12 @@
     <div class="bg-surface-raised rounded-2xl border border-white/[0.04] overflow-hidden">
       <table class="w-full table-fixed">
         <colgroup>
-          <col :class="isAdmin ? 'w-[20%]' : 'w-[22%]'" />
-          <col :class="isAdmin ? 'w-[20%]' : 'w-[22%]'" />
-          <col :class="isAdmin ? 'w-[18%]' : 'w-[20%]'" />
-          <col :class="isAdmin ? 'w-[16%]' : 'w-[18%]'" />
-          <col :class="isAdmin ? 'w-[16%]' : 'w-[18%]'" />
-          <col v-if="isAdmin" class="w-[10%]" />
+          <col :class="canEdit ? 'w-[20%]' : 'w-[22%]'" />
+          <col :class="canEdit ? 'w-[20%]' : 'w-[22%]'" />
+          <col :class="canEdit ? 'w-[18%]' : 'w-[20%]'" />
+          <col :class="canEdit ? 'w-[16%]' : 'w-[18%]'" />
+          <col :class="canEdit ? 'w-[16%]' : 'w-[18%]'" />
+          <col v-if="canEdit" class="w-[10%]" />
         </colgroup>
         <thead>
           <tr class="border-b border-white/[0.04]">
@@ -45,7 +45,7 @@
             <th class="px-4 py-3 text-right text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans">GMV</th>
             <th class="px-4 py-3 text-right text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans">退款</th>
             <th class="px-4 py-3 text-right text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans">DGMV</th>
-            <th v-if="isAdmin" class="px-4 py-3 text-center text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans">操作</th>
+            <th v-if="canEdit" class="px-4 py-3 text-center text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans">操作</th>
           </tr>
         </thead>
         <tbody>
@@ -57,7 +57,7 @@
             <td class="px-4 py-3 text-[12px] text-gray-300 font-mono tabular-nums text-right">{{ fmt(r.gmv) }}</td>
             <td class="px-4 py-3 text-[12px] text-danger-light/70 font-mono tabular-nums text-right">-{{ fmt(r.refund) }}</td>
             <td class="px-4 py-3 text-[13px] text-success-light font-mono tabular-nums font-bold text-right">{{ fmt(r.dgmv) }}</td>
-            <td v-if="isAdmin" class="px-4 py-3 text-center">
+            <td v-if="canEdit" class="px-4 py-3 text-center">
               <button @click="openEdit(r)" class="inline-flex items-center justify-center w-6 h-6 rounded-lg hover:bg-brand/[0.1] text-trust-300 hover:text-brand-light transition-colors cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </button>
@@ -90,12 +90,12 @@
           </div>
           <div>
             <label class="block text-[10px] font-semibold text-trust-300 uppercase tracking-[0.1em] mb-1.5 font-sans">GMV</label>
-            <input type="number" v-model="editForm.gmv" min="0"
+            <MoneyInput v-model="editForm.gmv"
               class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-[12px] text-white font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors tabular-nums" />
           </div>
           <div>
             <label class="block text-[10px] font-semibold text-trust-300 uppercase tracking-[0.1em] mb-1.5 font-sans">退款</label>
-            <input type="number" v-model="editForm.refund" min="0"
+            <MoneyInput v-model="editForm.refund"
               class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-[12px] text-white font-mono focus:outline-none focus:ring-2 focus:ring-danger/30 transition-colors tabular-nums" />
           </div>
           <div class="bg-white/[0.02] rounded-lg px-4 py-2.5 flex items-center justify-between border border-white/[0.04]">
@@ -121,11 +121,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import MoneyInput from '../components/MoneyInput.vue'
 import api from '../api'
 
 const route = useRoute()
 const auth = useAuthStore()
 const isAdmin = computed(() => auth.user?.role === 'admin')
+const canEdit = computed(() => isAdmin.value || String(auth.user?.id) === String(userId.value))
 
 const userId = computed(() => route.params.userId)
 const date = computed(() => route.query.date || '')
