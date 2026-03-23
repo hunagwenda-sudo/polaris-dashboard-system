@@ -29,6 +29,13 @@ public class UnfilledReminderScheduler {
     private final SysDictMapper dictMapper;
     private final ObjectMapper objectMapper;
 
+    /** 每天凌晨 0:00 通用提醒（不带人名） */
+    @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Shanghai")
+    public void midnightReminder() {
+        log.info("执行 0:00 通用填报提醒");
+        sendGeneralReminder();
+    }
+
     /** 每天上午 9:00 第一次提醒 */
     @Scheduled(cron = "0 0 9 * * ?", zone = "Asia/Shanghai")
     public void firstReminder() {
@@ -41,6 +48,30 @@ public class UnfilledReminderScheduler {
     public void secondReminder() {
         log.info("执行 10:00 未填报提醒");
         sendReminders("【二次提醒】");
+    }
+
+    private void sendGeneralReminder() {
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+
+        // 运营业绩通用提醒
+        List<String> recordWebhooks = getWebhookUrls("record_unfilled");
+        if (!recordWebhooks.isEmpty()) {
+            feishuNotifyService.sendGeneralReminder(
+                recordWebhooks,
+                "📋 " + yesterday + " 业绩填报提醒",
+                "/data-entry"
+            );
+        }
+
+        // 客服业绩通用提醒
+        List<String> serviceWebhooks = getWebhookUrls("service_record_unfilled");
+        if (!serviceWebhooks.isEmpty()) {
+            feishuNotifyService.sendGeneralReminder(
+                serviceWebhooks,
+                "📋 " + yesterday + " 客服业绩填报提醒",
+                "/service-entry"
+            );
+        }
     }
 
     private void sendReminders(String prefix) {

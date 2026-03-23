@@ -21,6 +21,42 @@ public class FeishuNotifyService {
     private String siteUrl;
 
     /**
+     * 发送通用提醒（不带人名，仅提醒填报）
+     */
+    public void sendGeneralReminder(List<String> webhookUrls, String title, String entryPath) {
+        if (webhookUrls == null || webhookUrls.isEmpty()) return;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(title).append("\n\n");
+        sb.append("请大家记得填写昨日业绩数据，谢谢！");
+
+        if (siteUrl != null && !siteUrl.isBlank() && entryPath != null) {
+            String link = siteUrl.endsWith("/") ? siteUrl.substring(0, siteUrl.length() - 1) : siteUrl;
+            sb.append("\n\n👉 点击录入：").append(link).append(entryPath);
+        }
+
+        String content = sb.toString();
+        Map<String, Object> body = Map.of(
+            "msg_type", "text",
+            "content", Map.of("text", content)
+        );
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
+        for (String url : webhookUrls) {
+            if (url == null || url.isBlank()) continue;
+            try {
+                restTemplate.postForEntity(url, request, String.class);
+                log.info("飞书通用提醒发送成功: webhook={}", url.substring(0, Math.min(url.length(), 60)) + "...");
+            } catch (Exception e) {
+                log.error("飞书通用提醒发送失败: webhook={}, error={}", url.substring(0, Math.min(url.length(), 60)) + "...", e.getMessage());
+            }
+        }
+    }
+
+    /**
      * 发送飞书群消息（支持多个 webhook 地址）
      * @param webhookUrls 飞书机器人 webhook 地址列表
      * @param title 消息标题
