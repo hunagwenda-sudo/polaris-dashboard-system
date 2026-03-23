@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -426,19 +427,28 @@ public class DashboardServiceImpl implements DashboardService {
         List<String> levels = extractLevelNames(thresholds);
 
         if (!quarterDgmv.isEmpty() && !thresholds.isEmpty()) {
-            // 找今天刚达到晋升线的人：预估职级 > 当前确定职级
+            // 找预估职级刚上涨的人（对比 sys_user.estimated_level，变高才播报并更新）
             for (var entry : quarterDgmv.entrySet()) {
                 if (!salesUserIds.contains(entry.getKey())) continue;
-                String estimated = estimateLevelFromThresholds(entry.getValue(), thresholds, levels);
+                String newEstimated = estimateLevelFromThresholds(entry.getValue(), thresholds, levels);
                 SysUser user = userMapper.selectById(entry.getKey());
                 if (user == null) continue;
-                String currentLevel = user.getLevel() != null ? user.getLevel() : "K1";
-                int estimatedIdx = levels.indexOf(estimated);
-                int currentIdx = levels.indexOf(currentLevel);
-                if (estimatedIdx > currentIdx) {
+                String oldEstimated = user.getEstimatedLevel();
+                int newIdx = levels.indexOf(newEstimated);
+                int oldIdx = oldEstimated != null ? levels.indexOf(oldEstimated) : -1;
+                if (newIdx > oldIdx) {
+                    // 预估职级上涨了，更新字段并播报
+                    user.setEstimatedLevel(newEstimated);
+                    user.setUpdatedAt(LocalDateTime.now());
+                    userMapper.updateById(user);
                     result.put("nearLevelUser", user.getName());
-                    result.put("nearLevelName", estimated);
+                    result.put("nearLevelName", newEstimated);
                     break; // 只播报一个
+                } else if (newIdx != oldIdx && oldEstimated != null) {
+                    // 预估下降了（退款等），静默更新字段
+                    user.setEstimatedLevel(newEstimated);
+                    user.setUpdatedAt(LocalDateTime.now());
+                    userMapper.updateById(user);
                 }
             }
         }

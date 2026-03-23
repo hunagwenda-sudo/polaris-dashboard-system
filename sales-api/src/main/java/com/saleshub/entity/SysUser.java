@@ -19,6 +19,7 @@ public class SysUser {
     private Long teamId;
     private Long groupId;
     private String level;      // K3-K6
+    private String estimatedLevel; // 预估职级（用于播报变化检测）
     private java.math.BigDecimal targetDgmv; // 个人季度目标
     private String status;     // active / inactive
     private LocalDate birthday;
