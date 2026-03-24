@@ -29,7 +29,7 @@
             <div class="flex items-center gap-1.5 shrink-0" :style="{ width: dailyFullscreen ? '140px' : '120px' }">
               <span :class="['text-gray-200 font-medium font-sans truncate', dailyFullscreen ? 'text-[13px]' : 'text-[11px]']">{{ d.name }}</span>
               <LevelBadge v-if="d.role === 'partner'" role="partner" />
-              <LevelBadge v-else :level="d.level || 'K1'" />
+              <LevelBadge v-else :level="d.estimatedLevel || d.level || 'K1'" />
             </div>
             <!-- 条形 -->
             <div class="flex-1 h-5 bg-white/[0.03] rounded-md overflow-hidden relative">

@@ -53,13 +53,14 @@
 
       <table class="w-full table-fixed">
         <colgroup>
-          <col class="w-[20%]" /><col class="w-[12%]" /><col class="w-[10%]" /><col class="w-[20%]" /><col class="w-[18%]" /><col class="w-[12%]" /><col class="w-[8%]" />
+          <col class="w-[18%]" /><col class="w-[10%]" /><col class="w-[8%]" /><col class="w-[14%]" /><col class="w-[14%]" /><col class="w-[14%]" /><col class="w-[10%]" /><col v-if="canManage" class="w-[8%]" />
         </colgroup>
         <thead>
           <tr class="border-b border-white/[0.04]">
             <th class="px-4 py-3 text-left text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans">姓名</th>
             <th class="px-4 py-3 text-center text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans">角色</th>
             <th class="px-4 py-3 text-center text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans">职级</th>
+            <th class="px-4 py-3 text-right text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans">季度DGMV</th>
             <th class="px-4 py-3 text-right text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans">季度目标</th>
             <th class="px-4 py-3 text-left text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans">手机号</th>
             <th class="px-4 py-3 text-center text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans">状态</th>
@@ -75,7 +76,8 @@
               </div>
             </td>
             <td class="px-4 py-3 text-center"><span :class="['inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-semibold border font-sans', roleBadge[m.role] || roleBadge.sales]">{{ roleLabel[m.role] || m.role }}</span></td>
-            <td class="px-4 py-3 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold bg-accent/[0.08] text-accent border border-accent/[0.12] font-mono">{{ m.level || 'K1' }}</span></td>
+            <td class="px-4 py-3 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold bg-accent/[0.08] text-accent border border-accent/[0.12] font-mono">{{ m.estimatedLevel || m.level || 'K1' }}</span></td>
+            <td class="px-4 py-3 text-right text-[12px] text-success-light font-mono tabular-nums font-bold">{{ fmt(m.quarterDgmv || 0) }}</td>
             <td class="px-4 py-3">
               <div class="flex items-center justify-end gap-2">
                 <span v-if="editingTarget !== m.id" class="text-[12px] text-gray-300 font-mono tabular-nums">{{ fmtTarget(m.targetDgmv) }}</span>

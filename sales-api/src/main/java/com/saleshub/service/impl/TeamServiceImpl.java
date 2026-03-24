@@ -164,6 +164,24 @@ public class TeamServiceImpl implements TeamService {
         List<SysUser> members = userMapper.selectList(
             new LambdaQueryWrapper<SysUser>().eq(SysUser::getTeamId, teamId)
         );
+
+        // 查本季度DGMV
+        LocalDate quarterStart = getQuarterStart();
+        List<Long> userIds = members.stream().map(SysUser::getId).toList();
+        Map<Long, BigDecimal> quarterDgmvMap = new HashMap<>();
+        if (!userIds.isEmpty()) {
+            List<BizDailyRecord> records = recordMapper.selectList(
+                new LambdaQueryWrapper<BizDailyRecord>()
+                    .in(BizDailyRecord::getUserId, userIds)
+                    .ge(BizDailyRecord::getRecordDate, quarterStart)
+                    .le(BizDailyRecord::getRecordDate, LocalDate.now())
+            );
+            quarterDgmvMap = records.stream()
+                .collect(java.util.stream.Collectors.groupingBy(BizDailyRecord::getUserId,
+                    java.util.stream.Collectors.reducing(BigDecimal.ZERO, BizDailyRecord::getDgmv, BigDecimal::add)));
+        }
+
+        Map<Long, BigDecimal> finalQuarterDgmvMap = quarterDgmvMap;
         return members.stream().map(u -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", u.getId());
@@ -173,6 +191,8 @@ public class TeamServiceImpl implements TeamService {
             m.put("phone", u.getPhone());
             m.put("status", u.getStatus());
             m.put("targetDgmv", u.getTargetDgmv());
+            m.put("quarterDgmv", finalQuarterDgmvMap.getOrDefault(u.getId(), BigDecimal.ZERO));
+            m.put("estimatedLevel", u.getEstimatedLevel());
             return m;
         }).collect(java.util.stream.Collectors.toList());
     }

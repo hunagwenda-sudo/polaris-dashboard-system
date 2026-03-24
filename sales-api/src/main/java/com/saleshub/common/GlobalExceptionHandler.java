@@ -5,10 +5,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.stream.Collectors;
@@ -51,6 +55,49 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<?> handleDuplicateKey(org.springframework.dao.DuplicateKeyException e) {
         return Result.error(400, "数据已存在，请勿重复添加");
+    }
+
+    /** 数据截断（字段超长） */
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<?> handleDataIntegrity(org.springframework.dao.DataIntegrityViolationException e) {
+        String msg = e.getMostSpecificCause().getMessage();
+        if (msg != null && msg.contains("Data truncation")) {
+            return Result.error(400, "输入内容过长，请缩短后重试");
+        }
+        if (msg != null && msg.contains("cannot be null")) {
+            return Result.error(400, "必填字段不能为空");
+        }
+        log.warn("数据完整性异常: {}", msg);
+        return Result.error(400, "数据保存失败，请检查输入内容");
+    }
+
+    /** 请求参数类型不匹配 */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<?> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        return Result.error(400, "参数格式不正确");
+    }
+
+    /** 缺少必要参数 */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<?> handleMissingParam(MissingServletRequestParameterException e) {
+        return Result.error(400, "缺少必要参数：" + e.getParameterName());
+    }
+
+    /** 请求体解析失败 */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<?> handleNotReadable(HttpMessageNotReadableException e) {
+        return Result.error(400, "请求数据格式错误");
+    }
+
+    /** 文件上传超限 */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<?> handleMaxUploadSize(MaxUploadSizeExceededException e) {
+        return Result.error(400, "上传文件过大，请压缩后重试");
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

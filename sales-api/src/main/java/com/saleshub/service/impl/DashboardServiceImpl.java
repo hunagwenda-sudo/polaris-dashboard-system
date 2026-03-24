@@ -208,6 +208,7 @@ public class DashboardServiceImpl implements DashboardService {
             map.put("userId", u.getId());
             map.put("name", u.getName() != null ? u.getName() : "未知");
             map.put("level", u.getLevel() != null ? u.getLevel() : "K1");
+            map.put("estimatedLevel", u.getEstimatedLevel() != null ? u.getEstimatedLevel() : u.getLevel() != null ? u.getLevel() : "K1");
             map.put("role", u.getRole());
             map.put("dgmv", userDgmv.getOrDefault(u.getId(), BigDecimal.ZERO));
             return map;

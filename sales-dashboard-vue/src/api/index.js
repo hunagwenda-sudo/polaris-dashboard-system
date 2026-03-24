@@ -26,7 +26,16 @@ api.interceptors.response.use(
       router.push({ name: 'login' })
     }
     const data = err.response?.data || {}
-    return Promise.reject({ code: data.code || status, message: data.message || '请求失败' })
+    const fallback = {
+      400: '请求参数有误',
+      401: '登录已过期，请重新登录',
+      403: '无权限执行此操作',
+      404: '请求的资源不存在',
+      413: '上传内容过大',
+      500: '服务器开小差了，请稍后重试',
+    }
+    const message = data.message || fallback[status] || '网络异常，请检查网络连接'
+    return Promise.reject({ code: data.code || status, message })
   }
 )
 
