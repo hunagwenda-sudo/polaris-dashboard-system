@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS sys_dict (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     type VARCHAR(32) NOT NULL COMMENT '字典类型，如 platform',
     code VARCHAR(64) NOT NULL COMMENT '字典编码',
-    label VARCHAR(100) NOT NULL COMMENT '显示名称',
+    label VARCHAR(2000) NOT NULL COMMENT '显示名称',
     icon_url VARCHAR(500) DEFAULT NULL COMMENT '图标路径',
     sort INT DEFAULT 0 COMMENT '排序',
     status VARCHAR(16) DEFAULT 'active' COMMENT 'active/inactive',
