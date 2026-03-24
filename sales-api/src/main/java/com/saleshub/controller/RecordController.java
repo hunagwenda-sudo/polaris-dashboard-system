@@ -160,9 +160,9 @@ public class RecordController {
     @PreAuthorize("hasAuthority('record:view')")
     public Result<?> update(@PathVariable Long id, @RequestBody Map<String, Object> body, Authentication auth) {
         log.info("更新业绩记录: id={}", id);
-        // 非管理员只能修改自己的记录
+        // 管理员和合伙人可以修改所有人的记录，其他人只能改自己的
         var details = (JwtUserDetails) auth.getDetails();
-        if (!"admin".equals(details.getRole())) {
+        if (!"admin".equals(details.getRole()) && !"partner".equals(details.getRole())) {
             BizDailyRecord existing = recordService.getById(id);
             if (existing == null) throw new com.saleshub.common.BusinessException("记录不存在");
             if (!existing.getUserId().equals(details.getUserId())) {

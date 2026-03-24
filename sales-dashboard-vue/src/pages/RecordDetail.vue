@@ -127,7 +127,8 @@ import api from '../api'
 const route = useRoute()
 const auth = useAuthStore()
 const isAdmin = computed(() => auth.user?.role === 'admin')
-const canEdit = computed(() => isAdmin.value || String(auth.user?.id) === String(userId.value))
+const isPartner = computed(() => auth.user?.role === 'partner')
+const canEdit = computed(() => isAdmin.value || isPartner.value || String(auth.user?.id) === String(userId.value))
 
 const userId = computed(() => route.params.userId)
 const date = computed(() => route.query.date || '')
