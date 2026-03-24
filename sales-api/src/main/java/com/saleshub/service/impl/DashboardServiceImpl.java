@@ -253,7 +253,17 @@ public class DashboardServiceImpl implements DashboardService {
 
         Map<Long, SysUser> userMap = loadUserMap(top7.stream().map(Map.Entry::getKey).toList());
 
-        // Load thresholds once for all users
+        // 查本季度DGMV用于计算实时预估职级
+        LocalDate quarterStart = getQuarterStart(now);
+        List<BizDailyRecord> quarterRecords = recordMapper.selectList(
+            new LambdaQueryWrapper<BizDailyRecord>()
+                .ge(BizDailyRecord::getRecordDate, quarterStart)
+                .le(BizDailyRecord::getRecordDate, now)
+        );
+        Map<Long, BigDecimal> quarterDgmv = quarterRecords.stream()
+            .collect(Collectors.groupingBy(BizDailyRecord::getUserId,
+                Collectors.reducing(BigDecimal.ZERO, BizDailyRecord::getDgmv, BigDecimal::add)));
+
         List<Map.Entry<String, BigDecimal>> thresholds = loadSortedThresholds();
         List<String> levels = extractLevelNames(thresholds);
 
@@ -269,7 +279,9 @@ public class DashboardServiceImpl implements DashboardService {
             map.put("level", user != null ? user.getLevel() : "K1");
             // 第6名开始金额用 ** 隐藏
             map.put("dgmv", rank <= 5 ? e.getValue() : "**");
-            map.put("estimatedLevel", estimateLevelFromThresholds(e.getValue(), thresholds, levels));
+            // 实时预估职级基于本季度DGMV
+            BigDecimal qDgmv = quarterDgmv.getOrDefault(e.getKey(), BigDecimal.ZERO);
+            map.put("estimatedLevel", estimateLevelFromThresholds(qDgmv, thresholds, levels));
             result.add(map);
         }
         return result;
