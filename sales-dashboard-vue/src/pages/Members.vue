@@ -52,7 +52,7 @@
             <input v-model="form.hireDate" type="date" :max="today" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-gray-300 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30" />
           </div>
         </div>
-        <div>
+        <div v-if="form.role !== 'service'">
           <label class="text-[10px] text-trust-300 font-sans block mb-1.5">渠道账号分配</label>
           <div class="space-y-2 max-h-[200px] overflow-y-auto">
             <div v-for="p in platforms" :key="p.code">
@@ -65,6 +65,23 @@
                   {{ acc.accountName }}
                 </label>
                 <span v-if="!(accountsByPlatform[p.code] || []).length" class="text-[9px] text-trust-400 font-sans">暂无账号</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-if="form.role === 'service'">
+          <label class="text-[10px] text-trust-300 font-sans block mb-1.5">渠道店铺分配</label>
+          <div class="space-y-2 max-h-[200px] overflow-y-auto">
+            <div v-for="p in platforms" :key="p.code">
+              <p class="text-[10px] font-semibold text-purple-400 font-sans mb-1">{{ p.label }}</p>
+              <div class="flex flex-wrap gap-1.5 ml-2">
+                <label v-for="shop in (shopsByPlatform[p.code] || [])" :key="shop.id"
+                  class="flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-sans cursor-pointer transition-colors duration-150"
+                  :class="form.assignedShopIds.includes(shop.id) ? 'bg-purple-500/[0.15] text-purple-400 border border-purple-500/[0.3]' : 'bg-white/[0.03] text-gray-400 border border-white/[0.06] hover:border-white/[0.12]'">
+                  <input type="checkbox" :value="shop.id" v-model="form.assignedShopIds" class="hidden" />
+                  {{ shop.shopName }}
+                </label>
+                <span v-if="!(shopsByPlatform[p.code] || []).length" class="text-[9px] text-trust-400 font-sans">暂无店铺</span>
               </div>
             </div>
           </div>
@@ -132,7 +149,7 @@
           </div>
         </div>
         <!-- 渠道账号分配 -->
-        <div>
+        <div v-if="editForm.role !== 'service'">
           <label class="text-[10px] text-trust-300 font-sans block mb-1.5">渠道账号分配</label>
           <div class="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3 space-y-2 max-h-[180px] overflow-y-auto">
             <div v-for="p in platforms" :key="p.code" class="flex items-start gap-2">
@@ -145,6 +162,24 @@
                   {{ acc.accountName }}
                 </label>
                 <span v-if="!(accountsByPlatform[p.code] || []).length" class="text-[9px] text-trust-400 font-sans">暂无账号</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 渠道店铺分配（客服） -->
+        <div v-if="editForm.role === 'service'">
+          <label class="text-[10px] text-trust-300 font-sans block mb-1.5">渠道店铺分配</label>
+          <div class="rounded-lg border border-purple-500/[0.12] bg-purple-500/[0.02] p-3 space-y-2 max-h-[180px] overflow-y-auto">
+            <div v-for="p in platforms" :key="p.code" class="flex items-start gap-2">
+              <span class="text-[10px] font-semibold text-purple-400 font-sans w-14 shrink-0 pt-0.5">{{ p.label }}</span>
+              <div class="flex flex-wrap gap-1.5">
+                <label v-for="shop in (shopsByPlatform[p.code] || [])" :key="shop.id"
+                  class="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-sans cursor-pointer transition-colors duration-150"
+                  :class="editForm.assignedShopIds.includes(shop.id) ? 'bg-purple-500/[0.15] text-purple-400 border border-purple-500/[0.3]' : 'bg-white/[0.03] text-gray-400 border border-white/[0.06] hover:border-white/[0.12]'">
+                  <input type="checkbox" :value="shop.id" v-model="editForm.assignedShopIds" class="hidden" />
+                  {{ shop.shopName }}
+                </label>
+                <span v-if="!(shopsByPlatform[p.code] || []).length" class="text-[9px] text-trust-400 font-sans">暂无店铺</span>
               </div>
             </div>
           </div>
@@ -303,6 +338,7 @@ const members = ref([])
 const teams = ref([])
 const platforms = ref([])
 const allAccounts = ref([])
+const allShops = ref([])
 const total = ref(0)
 const search = ref('')
 const levelOptions = ref(['K1'])
@@ -324,16 +360,25 @@ const accountsByPlatform = computed(() => {
   return map
 })
 
+const shopsByPlatform = computed(() => {
+  const map = {}
+  for (const s of allShops.value) {
+    if (!map[s.platformCode]) map[s.platformCode] = []
+    map[s.platformCode].push(s)
+  }
+  return map
+})
+
 // Create
 const showCreate = ref(false)
 const formError = ref('')
-const form = reactive({ username: '', name: '', phone: '', role: 'sales', teamId: null, birthday: '', hireDate: '', assignedAccountIds: [] })
+const form = reactive({ username: '', name: '', phone: '', role: 'sales', teamId: null, birthday: '', hireDate: '', assignedAccountIds: [], assignedShopIds: [] })
 
 // Edit
 const showEdit = ref(false)
 const editError = ref('')
 const editId = ref(null)
-const editForm = reactive({ username: '', name: '', phone: '', role: 'sales', teamId: null, level: 'K1', birthday: '', hireDate: '', remindEnabled: 1, status: 'active', assignedAccountIds: [] })
+const editForm = reactive({ username: '', name: '', phone: '', role: 'sales', teamId: null, level: 'K1', birthday: '', hireDate: '', remindEnabled: 1, status: 'active', assignedAccountIds: [], assignedShopIds: [] })
 
 let debounceTimer = null
 
@@ -373,6 +418,13 @@ async function fetchAccounts() {
   } catch { /* empty */ }
 }
 
+async function fetchShops() {
+  try {
+    const res = await api.get('/platform-shops')
+    allShops.value = res.data || []
+  } catch { /* empty */ }
+}
+
 async function fetchLevels() {
   try {
     const res = await api.get('/dict/level_threshold')
@@ -407,7 +459,7 @@ function hireDays(hireDate) {
 }
 
 function openCreate() {
-  Object.assign(form, { username: '', name: '', phone: '', role: 'sales', teamId: null, birthday: '', hireDate: '', assignedAccountIds: [] })
+  Object.assign(form, { username: '', name: '', phone: '', role: 'sales', teamId: null, birthday: '', hireDate: '', assignedAccountIds: [], assignedShopIds: [] })
   formError.value = ''
   showCreate.value = true
 }
@@ -418,12 +470,15 @@ async function createUser() {
   if (usernameError.value) { formError.value = usernameError.value; return }
   if (!form.username) { formError.value = '请输入用户名'; return }
   try {
-    const { assignedAccountIds, ...rest } = form
+    const { assignedAccountIds, assignedShopIds, ...rest } = form
     const payload = { ...rest, birthday: form.birthday || null, hireDate: form.hireDate || null }
     const res = await api.post('/users', payload)
     // 保存渠道分配
     if (assignedAccountIds.length > 0 && res.data?.id) {
       await api.put(`/users/${res.data.id}/platforms`, { accountIds: assignedAccountIds })
+    }
+    if (assignedShopIds.length > 0 && res.data?.id) {
+      await api.put(`/users/${res.data.id}/shops`, { shopIds: assignedShopIds })
     }
     showCreate.value = false
     fetchMembers()
@@ -446,9 +501,14 @@ async function openEdit(m) {
   editForm.status = m.status || 'active'
   // 加载用户渠道分配
   editForm.assignedAccountIds = []
+  editForm.assignedShopIds = []
   try {
     const res = await api.get(`/users/${m.id}/platforms`)
     editForm.assignedAccountIds = (res.data || []).map(a => a.accountId)
+  } catch { /* ignore */ }
+  try {
+    const res = await api.get(`/users/${m.id}/shops`)
+    editForm.assignedShopIds = (res.data || []).map(a => a.shopId)
   } catch { /* ignore */ }
   editError.value = ''
   showEdit.value = true
@@ -457,11 +517,12 @@ async function openEdit(m) {
 async function updateUser() {
   editError.value = ''
   try {
-    const { assignedAccountIds, teamId, ...rest } = editForm
+    const { assignedAccountIds, assignedShopIds, teamId, ...rest } = editForm
     const payload = { ...rest, birthday: editForm.birthday || null, hireDate: editForm.hireDate || null }
     await api.put(`/users/${editId.value}`, payload)
     // 保存渠道分配
     await api.put(`/users/${editId.value}/platforms`, { accountIds: assignedAccountIds })
+    await api.put(`/users/${editId.value}/shops`, { shopIds: assignedShopIds })
     showEdit.value = false
     fetchMembers()
   } catch (e) {
@@ -491,5 +552,5 @@ async function resetPasswordInEdit() {
   }
 }
 
-onMounted(() => { fetchTeams(); fetchLevels(); fetchPlatforms(); fetchAccounts(); fetchMembers() })
+onMounted(() => { fetchTeams(); fetchLevels(); fetchPlatforms(); fetchAccounts(); fetchShops(); fetchMembers() })
 </script>

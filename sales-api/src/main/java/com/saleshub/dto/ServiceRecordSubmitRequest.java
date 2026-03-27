@@ -13,6 +13,8 @@ public class ServiceRecordSubmitRequest {
     @Data
     public static class Item {
         private String platform;
+        private Long shopId;
+        private String shopNote;
         private String shift; // morning / evening
         private Integer receptionCount;
         private BigDecimal replyRate;

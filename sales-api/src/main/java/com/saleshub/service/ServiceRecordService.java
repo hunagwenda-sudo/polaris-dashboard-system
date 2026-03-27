@@ -11,4 +11,5 @@ public interface ServiceRecordService {
     IPage<BizServiceRecord> listRecords(Long userId, LocalDate startDate, LocalDate endDate, int page, int size);
     IPage<BizServiceRecord> listAllRecords(String keyword, LocalDate startDate, LocalDate endDate, String sortField, String sortOrder, int page, int size);
     java.util.List<java.util.Map<String, Object>> getUnfilledUsers(LocalDate date);
+    void updateRecord(Long id, java.util.Map<String, Object> body, Long currentUserId, String currentRole);
 }

@@ -14,6 +14,8 @@ public class BizServiceRecord {
     private Long userId;
     private LocalDate recordDate;
     private String platform;
+    private Long shopId;
+    private String shopNote;
     private String shift;
     private Integer receptionCount;
     private BigDecimal replyRate;

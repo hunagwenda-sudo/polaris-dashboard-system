@@ -2,6 +2,9 @@ package com.saleshub.controller;
 
 import com.saleshub.common.Result;
 import com.saleshub.dto.ServiceRecordSubmitRequest;
+import com.saleshub.entity.SysPlatformShop;
+import com.saleshub.mapper.SysPlatformShopMapper;
+import com.saleshub.mapper.SysUserShopMapper;
 import com.saleshub.service.ServiceRecordService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +15,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -21,6 +27,8 @@ import java.time.LocalDate;
 public class ServiceRecordController {
 
     private final ServiceRecordService serviceRecordService;
+    private final SysUserShopMapper userShopMapper;
+    private final SysPlatformShopMapper platformShopMapper;
 
     @PostMapping
     @PreAuthorize("hasRole('SERVICE')")
@@ -64,5 +72,40 @@ public class ServiceRecordController {
     @PreAuthorize("hasAnyRole('ADMIN', 'PARTNER')")
     public Result<?> unfilled(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return Result.ok(serviceRecordService.getUnfilledUsers(date));
+    }
+
+    /** 修改客服记录（客服改自己的，管理员/合伙人改任何人的） */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PARTNER', 'SERVICE')")
+    public Result<?> update(@PathVariable Long id, @RequestBody Map<String, Object> body, Authentication auth) {
+        var details = (com.saleshub.security.JwtUserDetails) auth.getDetails();
+        serviceRecordService.updateRecord(id, body, details.getUserId(), details.getRole());
+        return Result.ok();
+    }
+
+    /** 客服获取自己分配的店铺 */
+    @GetMapping("/my-shops")
+    @PreAuthorize("hasRole('SERVICE')")
+    public Result<?> myShops(@AuthenticationPrincipal Long userId) {
+        var assignments = userShopMapper.selectList(
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.saleshub.entity.SysUserShop>()
+                .eq(com.saleshub.entity.SysUserShop::getUserId, userId)
+        );
+        if (assignments.isEmpty()) return Result.ok(List.of());
+        var shopIds = assignments.stream().map(a -> a.getShopId()).toList();
+        var shops = platformShopMapper.selectList(
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysPlatformShop>()
+                .in(SysPlatformShop::getId, shopIds)
+        );
+        var shopMap = shops.stream().collect(Collectors.toMap(SysPlatformShop::getId, s -> s));
+        var result = assignments.stream().map(a -> {
+            var shop = shopMap.get(a.getShopId());
+            return Map.<String, Object>of(
+                "platformCode", a.getPlatformCode(),
+                "shopId", a.getShopId(),
+                "shopName", shop != null ? shop.getShopName() : ""
+            );
+        }).toList();
+        return Result.ok(result);
     }
 }

@@ -39,21 +39,26 @@ public class ServiceRecordServiceImpl implements ServiceRecordService {
             throw new BusinessException("日期不能大于今天");
         }
         for (var item : request.getItems()) {
-            Long count = recordMapper.selectCount(
-                new LambdaQueryWrapper<BizServiceRecord>()
-                    .eq(BizServiceRecord::getUserId, userId)
-                    .eq(BizServiceRecord::getRecordDate, request.getRecordDate())
-                    .eq(BizServiceRecord::getPlatform, item.getPlatform())
-                    .eq(BizServiceRecord::getShift, item.getShift())
-            );
+            var wrapper = new LambdaQueryWrapper<BizServiceRecord>()
+                .eq(BizServiceRecord::getUserId, userId)
+                .eq(BizServiceRecord::getRecordDate, request.getRecordDate())
+                .eq(BizServiceRecord::getPlatform, item.getPlatform())
+                .eq(BizServiceRecord::getShift, item.getShift());
+            if (item.getShopId() != null) {
+                wrapper.eq(BizServiceRecord::getShopId, item.getShopId());
+            }
+            Long count = recordMapper.selectCount(wrapper);
             if (count > 0) {
                 String shiftLabel = "morning".equals(item.getShift()) ? "早班" : "晚班";
-                throw new BusinessException("日期 " + request.getRecordDate() + " 平台 " + item.getPlatform() + " " + shiftLabel + " 已提交过");
+                String shopLabel = item.getShopNote() != null ? " 店铺 " + item.getShopNote() : "";
+                throw new BusinessException("日期 " + request.getRecordDate() + " 平台 " + item.getPlatform() + shopLabel + " " + shiftLabel + " 已提交过");
             }
             BizServiceRecord record = new BizServiceRecord();
             record.setUserId(userId);
             record.setRecordDate(request.getRecordDate());
             record.setPlatform(item.getPlatform());
+            record.setShopId(item.getShopId());
+            record.setShopNote(item.getShopNote());
             record.setShift(item.getShift());
             record.setReceptionCount(item.getReceptionCount() != null ? item.getReceptionCount() : 0);
             record.setReplyRate(item.getReplyRate());
@@ -133,5 +138,21 @@ public class ServiceRecordServiceImpl implements ServiceRecordService {
                 return m;
             })
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public void updateRecord(Long id, Map<String, Object> body, Long currentUserId, String currentRole) {
+        BizServiceRecord record = recordMapper.selectById(id);
+        if (record == null) throw new BusinessException("记录不存在");
+        // 客服只能改自己的
+        if ("service".equals(currentRole) && !record.getUserId().equals(currentUserId)) {
+            throw new BusinessException("无权修改他人记录");
+        }
+        if (body.containsKey("shift")) record.setShift((String) body.get("shift"));
+        if (body.containsKey("receptionCount")) record.setReceptionCount(((Number) body.get("receptionCount")).intValue());
+        if (body.containsKey("replyRate")) record.setReplyRate(new java.math.BigDecimal(body.get("replyRate").toString()));
+        if (body.containsKey("praiseRate")) record.setPraiseRate(new java.math.BigDecimal(body.get("praiseRate").toString()));
+        record.setUpdatedAt(LocalDateTime.now());
+        recordMapper.updateById(record);
     }
 }

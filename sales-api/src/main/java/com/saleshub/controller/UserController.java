@@ -26,6 +26,8 @@ public class UserController {
     private final UserService userService;
     private final AuditService auditService;
     private final com.saleshub.service.UserPlatformService userPlatformService;
+    private final com.saleshub.mapper.SysUserShopMapper userShopMapper;
+    private final com.saleshub.mapper.SysPlatformShopMapper platformShopMapper;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'PARTNER')")
@@ -107,6 +109,52 @@ public class UserController {
         userPlatformService.assign(id, ids);
         var details = (JwtUserDetails) auth.getDetails();
         auditService.log(details.getUserId(), details.getUsername(), "UPDATE", "SysUserPlatform", id, "accountIds=" + ids);
+        return Result.ok();
+    }
+
+    /** 获取用户的店铺分配（客服用） */
+    @GetMapping("/{id}/shops")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PARTNER')")
+    public Result<?> getUserShops(@PathVariable Long id) {
+        return Result.ok(userShopMapper.selectList(
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.saleshub.entity.SysUserShop>()
+                .eq(com.saleshub.entity.SysUserShop::getUserId, id)
+        ));
+    }
+
+    /** 设置用户的店铺分配（全量替换） */
+    @PutMapping("/{id}/shops")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PARTNER')")
+    public Result<?> assignShops(@PathVariable Long id, @RequestBody Map<String, Object> body, Authentication auth) {
+        log.info("分配用户店铺: userId={}", id);
+        @SuppressWarnings("unchecked")
+        java.util.List<Number> shopIds = (java.util.List<Number>) body.get("shopIds");
+        java.util.List<Long> ids = shopIds == null ? java.util.List.of()
+            : shopIds.stream().map(Number::longValue).toList();
+
+        // 删除旧的
+        userShopMapper.delete(
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.saleshub.entity.SysUserShop>()
+                .eq(com.saleshub.entity.SysUserShop::getUserId, id)
+        );
+        // 插入新的
+        if (!ids.isEmpty()) {
+            var shops = platformShopMapper.selectList(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.saleshub.entity.SysPlatformShop>()
+                    .in(com.saleshub.entity.SysPlatformShop::getId, ids)
+            );
+            var idToCode = shops.stream().collect(java.util.stream.Collectors.toMap(
+                com.saleshub.entity.SysPlatformShop::getId, com.saleshub.entity.SysPlatformShop::getPlatformCode));
+            for (Long shopId : ids) {
+                var us = new com.saleshub.entity.SysUserShop();
+                us.setUserId(id);
+                us.setShopId(shopId);
+                us.setPlatformCode(idToCode.getOrDefault(shopId, ""));
+                userShopMapper.insert(us);
+            }
+        }
+        var details = (JwtUserDetails) auth.getDetails();
+        auditService.log(details.getUserId(), details.getUsername(), "UPDATE", "SysUserShop", id, "shopIds=" + ids);
         return Result.ok();
     }
 }
