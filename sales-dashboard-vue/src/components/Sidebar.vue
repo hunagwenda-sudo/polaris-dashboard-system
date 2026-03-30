@@ -94,7 +94,6 @@ const navGroups = [
       { name: 'backfill', to: '/backfill', label: '业绩补录', icon: IconClipboard, roles: ['admin', 'partner'] },
       { name: 'records', to: '/records', label: '业绩查看', icon: IconFile, roles: ['admin', 'partner', 'sales'] },
       { name: 'serviceRecords', to: '/service-records', label: '客服业绩查看', icon: IconHeadphones, roles: ['admin', 'partner', 'service'] },
-      { name: 'weeklyArchive', to: '/weekly-archive', label: '周榜存档', icon: IconTrophy, roles: ['admin', 'partner', 'sales'] },
     ],
   },
   {
@@ -105,6 +104,7 @@ const navGroups = [
       { name: 'members', to: '/members', label: '人员管理', icon: IconUser, roles: ['admin', 'partner'] },
       { name: 'platforms', to: '/platforms', label: '渠道管理', icon: IconLayers, roles: ['admin', 'partner'] },
       { name: 'levelConfig', to: '/level-config', label: '职级设定', icon: IconTrending, roles: ['admin'] },
+      { name: 'weeklyArchive', to: '/weekly-archive', label: '周榜存档', icon: IconTrophy, roles: ['admin', 'partner', 'sales'] },
       { name: 'quarterlyReport', to: '/quarterly-report', label: '季度报表', icon: IconCalendar, roles: ['admin'] },
     ],
   },

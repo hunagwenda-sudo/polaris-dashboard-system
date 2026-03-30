@@ -62,8 +62,7 @@
             <td class="px-4 py-3 text-center"><span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-accent/[0.08] text-accent border border-accent/[0.12] font-mono">{{ r.userLevel || 'K1' }}</span></td>
             <td class="px-4 py-3 text-center"><span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-success/[0.08] text-success-light border border-success/[0.12] font-mono">{{ r.estimatedLevel || 'K1' }}</span></td>
             <td class="px-4 py-3 text-right">
-              <span v-if="r.rankNum <= 5" class="text-[13px] font-bold text-success-light font-mono tabular-nums">¥{{ Number(r.dgmv).toLocaleString() }}</span>
-              <span v-else class="text-[13px] font-bold text-trust-300 font-mono">**</span>
+              <span class="text-[13px] font-bold text-success-light font-mono tabular-nums">¥{{ Number(r.dgmv).toLocaleString() }}</span>
             </td>
           </tr>
         </tbody>
@@ -75,10 +74,11 @@
     <div v-if="showGenerate" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showGenerate = false">
       <div class="bg-trust-800 border border-white/[0.08] rounded-2xl p-6 w-[380px] space-y-4">
         <h3 class="text-[14px] font-semibold text-white font-sans">补录周榜存档</h3>
-        <p class="text-[11px] text-trust-300 font-sans">选择某周的周一日期，系统会根据该周业绩数据生成存档</p>
+        <p class="text-[11px] text-trust-300 font-sans">选择任意日期，系统自动定位到该周（周一~周日）生成存档</p>
         <div>
-          <label class="text-[10px] text-trust-300 font-sans block mb-1">周一日期</label>
-          <input type="date" v-model="generateDate" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 [color-scheme:dark]" />
+          <label class="text-[10px] text-trust-300 font-sans block mb-1">选择日期</label>
+          <input type="date" v-model="generateDate" :max="maxGenerateDate" class="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-[12px] text-white font-mono focus:outline-none focus:ring-2 focus:ring-brand/30 [color-scheme:dark]" />
+          <p v-if="generateDate" class="text-[10px] text-trust-300 mt-1.5 font-sans">将生成 <span class="text-brand-light font-semibold">{{ computedWeekRange }}</span> 的周榜存档</p>
         </div>
         <p v-if="generateError" class="text-red-400 text-[11px] font-sans">{{ generateError }}</p>
         <p v-if="generateSuccess" class="text-success-light text-[11px] font-sans">{{ generateSuccess }}</p>
@@ -99,7 +99,7 @@ import { useAuthStore } from '../stores/auth'
 import api from '../api'
 
 const auth = useAuthStore()
-const isAdmin = computed(() => auth.user?.role === 'admin')
+const isAdmin = computed(() => ['admin', 'partner'].includes(auth.user?.role))
 
 const roleLabel = { admin: '管理员', partner: '合伙人', sales: '运营' }
 const roleBadge = {
@@ -123,6 +123,34 @@ const generateError = ref('')
 const generateSuccess = ref('')
 const generating = ref(false)
 
+// 不能选本周及以后（只能存档已结束的周）
+const maxGenerateDate = (() => {
+  const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }))
+  // 上周日
+  const day = d.getDay() || 7
+  d.setDate(d.getDate() - day)
+  return d.toLocaleDateString('sv-SE')
+})()
+
+// 根据选择的日期计算周一~周日范围
+const computedWeekRange = computed(() => {
+  if (!generateDate.value) return ''
+  const d = new Date(generateDate.value)
+  const day = d.getDay() || 7
+  const mon = new Date(d)
+  mon.setDate(d.getDate() - day + 1)
+  const sun = new Date(mon)
+  sun.setDate(mon.getDate() + 6)
+  return `${mon.toLocaleDateString('sv-SE')} ~ ${sun.toLocaleDateString('sv-SE')}`
+})
+
+function getMonday(dateStr) {
+  const d = new Date(dateStr)
+  const day = d.getDay() || 7
+  d.setDate(d.getDate() - day + 1)
+  return d.toLocaleDateString('sv-SE')
+}
+
 async function fetchWeeks() {
   try {
     const res = await api.get('/dashboard/weekly-archive/weeks')
@@ -143,9 +171,10 @@ async function doGenerate() {
   generateError.value = ''
   generateSuccess.value = ''
   if (!generateDate.value) { generateError.value = '请选择日期'; return }
+  const weekStart = getMonday(generateDate.value)
   generating.value = true
   try {
-    const res = await api.post('/dashboard/weekly-archive/generate', { weekStart: generateDate.value })
+    const res = await api.post('/dashboard/weekly-archive/generate', { weekStart })
     generateSuccess.value = `存档成功，共 ${res.data?.count || 0} 条记录`
     fetchWeeks()
   } catch (e) {

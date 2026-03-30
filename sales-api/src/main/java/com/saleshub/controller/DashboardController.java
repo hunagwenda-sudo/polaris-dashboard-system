@@ -116,12 +116,17 @@ public class DashboardController {
 
     /** 手动存档指定周（补录历史周榜） */
     @PostMapping("/weekly-archive/generate")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PARTNER')")
     public Result<?> generateWeeklyArchive(@RequestBody Map<String, String> body) {
         String dateStr = body.get("weekStart");
-        if (dateStr == null) throw new com.saleshub.common.BusinessException("请指定周一日期 weekStart");
-        java.time.LocalDate weekStart = java.time.LocalDate.parse(dateStr);
+        if (dateStr == null) throw new com.saleshub.common.BusinessException("请指定日期");
+        java.time.LocalDate date = java.time.LocalDate.parse(dateStr);
+        // 自动对齐到周一
+        java.time.LocalDate weekStart = date.with(java.time.DayOfWeek.MONDAY);
         java.time.LocalDate weekEnd = weekStart.plusDays(6);
+        if (weekEnd.isAfter(java.time.LocalDate.now().minusDays(1))) {
+            throw new com.saleshub.common.BusinessException("只能存档已结束的周");
+        }
         log.info("手动存档周榜: {} ~ {}", weekStart, weekEnd);
         int count = weeklyArchiver.doArchive(weekStart, weekEnd);
         return Result.ok(Map.of("count", count));
