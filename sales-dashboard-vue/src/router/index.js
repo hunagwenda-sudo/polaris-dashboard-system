@@ -19,6 +19,7 @@ const routes = [
   { path: '/backfill', name: 'backfill', component: () => import('../pages/BackfillEntry.vue'), meta: { roles: ['admin', 'partner'] } },
   { path: '/level-config', name: 'levelConfig', component: () => import('../pages/LevelConfig.vue'), meta: { roles: ['admin'] } },
   { path: '/quarterly-report', name: 'quarterlyReport', component: () => import('../pages/QuarterlyReport.vue'), meta: { roles: ['admin'] } },
+  { path: '/weekly-archive', name: 'weeklyArchive', component: () => import('../pages/WeeklyArchive.vue'), meta: { roles: ['admin', 'partner', 'sales'] } },
 ]
 
 const router = createRouter({

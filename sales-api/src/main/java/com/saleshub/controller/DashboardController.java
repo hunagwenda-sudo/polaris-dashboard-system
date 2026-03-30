@@ -19,6 +19,8 @@ import java.util.Map;
 public class DashboardController {
 
     private final DashboardService dashboardService;
+    private final com.saleshub.mapper.BizWeeklyLeaderboardMapper weeklyLeaderboardMapper;
+    private final com.saleshub.scheduler.WeeklyLeaderboardArchiver weeklyArchiver;
 
     @GetMapping("/personal")
     public Result<Map<String, Object>> personal(@AuthenticationPrincipal Long userId) {
@@ -77,6 +79,51 @@ public class DashboardController {
         String quarter = body.get("quarter");
         if (quarter == null || quarter.isBlank()) throw new com.saleshub.common.BusinessException("请指定季度");
         int count = dashboardService.generateQuarterlySnapshot(quarter);
+        return Result.ok(Map.of("count", count));
+    }
+
+    /** 获取已存档的周列表 */
+    @GetMapping("/weekly-archive/weeks")
+    public Result<?> archivedWeeks() {
+        var list = weeklyLeaderboardMapper.selectList(
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.saleshub.entity.BizWeeklyLeaderboard>()
+                .select(com.saleshub.entity.BizWeeklyLeaderboard::getWeekLabel,
+                        com.saleshub.entity.BizWeeklyLeaderboard::getWeekStart,
+                        com.saleshub.entity.BizWeeklyLeaderboard::getWeekEnd)
+                .groupBy(com.saleshub.entity.BizWeeklyLeaderboard::getWeekLabel,
+                         com.saleshub.entity.BizWeeklyLeaderboard::getWeekStart,
+                         com.saleshub.entity.BizWeeklyLeaderboard::getWeekEnd)
+                .orderByDesc(com.saleshub.entity.BizWeeklyLeaderboard::getWeekStart)
+        );
+        var weeks = list.stream().map(w -> Map.of(
+            "weekLabel", w.getWeekLabel(),
+            "weekStart", w.getWeekStart().toString(),
+            "weekEnd", w.getWeekEnd().toString()
+        )).toList();
+        return Result.ok(weeks);
+    }
+
+    /** 获取指定周的存档榜单 */
+    @GetMapping("/weekly-archive/detail")
+    public Result<?> archivedWeekDetail(@RequestParam String weekLabel) {
+        var rows = weeklyLeaderboardMapper.selectList(
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.saleshub.entity.BizWeeklyLeaderboard>()
+                .eq(com.saleshub.entity.BizWeeklyLeaderboard::getWeekLabel, weekLabel)
+                .orderByAsc(com.saleshub.entity.BizWeeklyLeaderboard::getRankNum)
+        );
+        return Result.ok(rows);
+    }
+
+    /** 手动存档指定周（补录历史周榜） */
+    @PostMapping("/weekly-archive/generate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result<?> generateWeeklyArchive(@RequestBody Map<String, String> body) {
+        String dateStr = body.get("weekStart");
+        if (dateStr == null) throw new com.saleshub.common.BusinessException("请指定周一日期 weekStart");
+        java.time.LocalDate weekStart = java.time.LocalDate.parse(dateStr);
+        java.time.LocalDate weekEnd = weekStart.plusDays(6);
+        log.info("手动存档周榜: {} ~ {}", weekStart, weekEnd);
+        int count = weeklyArchiver.doArchive(weekStart, weekEnd);
         return Result.ok(Map.of("count", count));
     }
 }
