@@ -194,6 +194,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         // 加载用户列表，根据 includePartner 决定是否包含合伙人
         LambdaQueryWrapper<SysUser> query = new LambdaQueryWrapper<SysUser>();
+        query.eq(SysUser::getStatus, "active");
         if (includePartner) {
             query.in(SysUser::getRole, "sales", "partner");
         } else {
