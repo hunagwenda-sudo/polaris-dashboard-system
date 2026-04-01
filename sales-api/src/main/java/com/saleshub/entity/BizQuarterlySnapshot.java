@@ -15,6 +15,7 @@ public class BizQuarterlySnapshot {
     private Long id;
     private Long userId;
     private String userName;
+    private String userRole;
     private Long teamId;
     private String teamName;
     private String quarter;

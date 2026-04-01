@@ -65,16 +65,18 @@
       <table v-if="snapshots.length > 0" class="w-full table-fixed">
         <colgroup>
           <col class="w-[5%]" />
-          <col class="w-[14%]" />
-          <col class="w-[14%]" />
-          <col class="w-[10%]" />
-          <col class="w-[12%]" />
-          <col class="w-[20%]" />
+          <col class="w-[13%]" />
+          <col class="w-[8%]" />
+          <col class="w-[13%]" />
+          <col class="w-[9%]" />
+          <col class="w-[11%]" />
+          <col class="w-[18%]" />
         </colgroup>
         <thead>
           <tr class="border-b border-white/[0.04]">
             <th class="px-3 py-3 text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans text-center">#</th>
             <th class="px-3 py-3 text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans text-left">姓名</th>
+            <th class="px-3 py-3 text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans text-left">角色</th>
             <th class="px-3 py-3 text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans text-left">团队</th>
             <th class="px-3 py-3 text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans text-left">确定职级</th>
             <th class="px-3 py-3 text-[9px] font-semibold text-trust-300 uppercase tracking-[0.12em] font-sans text-left">估算职级</th>
@@ -91,13 +93,21 @@
               <span v-else class="text-[10px] text-trust-300 font-mono">{{ idx + 1 }}</span>
             </td>
             <td class="px-3 py-2.5 text-[12px] font-medium text-gray-200 font-sans">{{ s.userName || '—' }}</td>
+            <td class="px-3 py-2.5">
+              <span :class="['inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-semibold border font-sans',
+                s.userRole === 'partner' ? 'bg-brand/[0.08] text-brand border-brand/[0.12]' : 'bg-white/[0.04] text-gray-400 border-white/[0.04]']">
+                {{ s.userRole === 'partner' ? '合伙人' : '运营' }}
+              </span>
+            </td>
             <td class="px-3 py-2.5 text-[11px] text-gray-400 font-sans">{{ s.teamName || '—' }}</td>
             <td class="px-3 py-2.5">
-              <span v-if="s.level" class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-accent/[0.08] text-accent border border-accent/[0.12] font-mono">{{ s.level }}</span>
+              <span v-if="s.userRole === 'partner'" class="text-[10px] text-trust-400 font-sans">—</span>
+              <span v-else-if="s.level" class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-accent/[0.08] text-accent border border-accent/[0.12] font-mono">{{ s.level }}</span>
               <span v-else class="text-[10px] text-trust-400 font-sans">未设定</span>
             </td>
             <td class="px-3 py-2.5">
-              <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-brand/[0.08] text-brand-light border border-brand/[0.12] font-mono">{{ s.estimatedLevel || 'K1' }}</span>
+              <span v-if="s.userRole === 'partner'" class="text-[10px] text-trust-400 font-sans">—</span>
+              <span v-else class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-brand/[0.08] text-brand-light border border-brand/[0.12] font-mono">{{ s.estimatedLevel || 'K1' }}</span>
             </td>
             <td class="px-3 py-2.5 text-right">
               <span class="text-[13px] font-semibold text-white font-mono tabular-nums">¥{{ formatMoney(s.totalDgmv) }}</span>

@@ -45,21 +45,21 @@ public class QuarterlyLevelResetScheduler {
         LocalDate prevQuarterStart = getQuarterStart(prevQuarterEnd);
         String quarterLabel = formatQuarterLabel(prevQuarterStart);
 
-        // 所有在职运营
-        List<SysUser> salesUsers = userMapper.selectList(
+        // 所有在职运营和合伙人（用于快照）
+        List<SysUser> snapshotUsers = userMapper.selectList(
             new LambdaQueryWrapper<SysUser>()
-                .eq(SysUser::getRole, "sales")
+                .in(SysUser::getRole, "sales", "partner")
                 .eq(SysUser::getStatus, "active")
         );
 
-        if (!salesUsers.isEmpty()) {
+        if (!snapshotUsers.isEmpty()) {
             // 团队名称 map
             List<SysTeam> teams = teamMapper.selectList(null);
             Map<Long, String> teamNameMap = teams.stream()
                 .collect(Collectors.toMap(SysTeam::getId, SysTeam::getName, (a, b) -> a));
 
             // 上季度所有业绩记录
-            Set<Long> userIds = salesUsers.stream().map(SysUser::getId).collect(Collectors.toSet());
+            Set<Long> userIds = snapshotUsers.stream().map(SysUser::getId).collect(Collectors.toSet());
             List<BizDailyRecord> records = recordMapper.selectList(
                 new LambdaQueryWrapper<BizDailyRecord>()
                     .in(BizDailyRecord::getUserId, userIds)
@@ -76,7 +76,7 @@ public class QuarterlyLevelResetScheduler {
 
             // 保存快照
             int snapshotCount = 0;
-            for (SysUser user : salesUsers) {
+            for (SysUser user : snapshotUsers) {
                 BigDecimal totalDgmv = dgmvMap.getOrDefault(user.getId(), BigDecimal.ZERO);
                 String estimatedLevel = estimateLevel(totalDgmv, thresholds, levels);
 
@@ -91,6 +91,7 @@ public class QuarterlyLevelResetScheduler {
                 BizQuarterlySnapshot snapshot = new BizQuarterlySnapshot();
                 snapshot.setUserId(user.getId());
                 snapshot.setUserName(user.getName());
+                snapshot.setUserRole(user.getRole());
                 snapshot.setTeamId(user.getTeamId());
                 snapshot.setTeamName(user.getTeamId() != null ? teamNameMap.get(user.getTeamId()) : null);
                 snapshot.setQuarter(quarterLabel);
@@ -104,9 +105,11 @@ public class QuarterlyLevelResetScheduler {
             log.info("已保存 {} 条季度快照 ({})", snapshotCount, quarterLabel);
         }
 
-        // 重置职级
+        // 重置职级（仅运营，合伙人不参与职级体系）
+        List<SysUser> salesOnlyUsers = snapshotUsers.stream()
+            .filter(u -> "sales".equals(u.getRole())).toList();
         int resetCount = 0;
-        for (SysUser user : salesUsers) {
+        for (SysUser user : salesOnlyUsers) {
             user.setLevel(null);
             user.setUpdatedAt(LocalDateTime.now());
             userMapper.updateById(user);

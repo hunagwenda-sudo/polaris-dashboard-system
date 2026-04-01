@@ -590,15 +590,20 @@ public class DashboardServiceImpl implements DashboardService {
         // 不能为未来季度生成
         if (qStart.isAfter(LocalDate.now())) throw new com.saleshub.common.BusinessException("不能为未来季度生成快照");
 
-        // 检查是否已有快照
+        // 如果已有快照，先删除旧的再重新生成
         Long existing = snapshotMapper.selectCount(
             new LambdaQueryWrapper<BizQuarterlySnapshot>().eq(BizQuarterlySnapshot::getQuarter, quarter)
         );
-        if (existing > 0) throw new com.saleshub.common.BusinessException("该季度快照已存在，共 " + existing + " 条");
+        if (existing > 0) {
+            snapshotMapper.delete(
+                new LambdaQueryWrapper<BizQuarterlySnapshot>().eq(BizQuarterlySnapshot::getQuarter, quarter)
+            );
+            log.info("已删除旧快照 {} 条，准备重新生成", existing);
+        }
 
-        // 所有运营（含已离职的，因为历史数据需要）
+        // 所有运营和合伙人（含已离职的，因为历史数据需要）
         List<SysUser> salesUsers = userMapper.selectList(
-            new LambdaQueryWrapper<SysUser>().eq(SysUser::getRole, "sales")
+            new LambdaQueryWrapper<SysUser>().in(SysUser::getRole, "sales", "partner")
         );
         if (salesUsers.isEmpty()) return 0;
 
@@ -630,6 +635,7 @@ public class DashboardServiceImpl implements DashboardService {
             BizQuarterlySnapshot snapshot = new BizQuarterlySnapshot();
             snapshot.setUserId(user.getId());
             snapshot.setUserName(user.getName());
+            snapshot.setUserRole(user.getRole());
             snapshot.setTeamId(user.getTeamId());
             snapshot.setTeamName(user.getTeamId() != null ? teamNameMap.get(user.getTeamId()) : null);
             snapshot.setQuarter(quarter);
