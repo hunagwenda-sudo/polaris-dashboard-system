@@ -42,13 +42,15 @@ public class WeeklyLeaderboardArchiver {
         String weekLabel = weekStart.getYear() + "-W"
             + String.format("%02d", weekStart.get(WeekFields.ISO.weekOfWeekBasedYear()));
 
-        // 检查是否已存档
+        // 如果已存档，先删除旧的再重新生成
         Long existing = leaderboardMapper.selectCount(
             new LambdaQueryWrapper<BizWeeklyLeaderboard>().eq(BizWeeklyLeaderboard::getWeekLabel, weekLabel)
         );
         if (existing > 0) {
-            log.info("周榜 {} 已存档，跳过", weekLabel);
-            return 0;
+            leaderboardMapper.delete(
+                new LambdaQueryWrapper<BizWeeklyLeaderboard>().eq(BizWeeklyLeaderboard::getWeekLabel, weekLabel)
+            );
+            log.info("周榜 {} 已有旧数据 {} 条，已删除准备重新生成", weekLabel, existing);
         }
 
         log.info("开始存档周榜: {} ({} ~ {})", weekLabel, weekStart, weekEnd);
