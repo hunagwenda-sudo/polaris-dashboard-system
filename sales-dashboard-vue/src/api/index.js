@@ -20,9 +20,13 @@ api.interceptors.response.use(
   res => res.data,
   err => {
     const status = err.response?.status
-    if (status === 401 || status === 403) {
+    if (status === 401) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
+      router.push({ name: 'login' })
+    }
+    // 403 且没有 token 说明未登录，也跳登录页
+    if (status === 403 && !localStorage.getItem('token')) {
       router.push({ name: 'login' })
     }
     const data = err.response?.data || {}

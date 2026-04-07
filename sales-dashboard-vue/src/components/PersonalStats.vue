@@ -221,6 +221,7 @@ import { useAuthStore } from '../stores/auth'
 const authStore = useAuthStore()
 const isAdmin = computed(() => authStore.role === 'admin')
 const isPartner = computed(() => authStore.role === 'partner')
+const isService = computed(() => authStore.role === 'service')
 
 const stats = reactive({
   targetDgmv: 0, totalDgmv: 0, gap: 0, daysLeft: 0, elapsedDays: 0, quarterTotalDays: 91,
@@ -242,6 +243,7 @@ const fmtWan = (v) => (Number(v) / 10000).toFixed(1)
 const currentQuarter = computed(() => Math.ceil((new Date().getMonth() + 1) / 3))
 
 onMounted(async () => {
+  if (isService.value) return // 客服不加载 dashboard 数据
   try {
     const requests = [api.get('/dashboard/personal')]
     if (!isAdmin.value && !isPartner.value) requests.push(api.get('/dashboard/personal-level'))
