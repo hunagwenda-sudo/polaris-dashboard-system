@@ -348,7 +348,10 @@ async function removeMember(userId) {
       fetchAvailableMembers(currentGroup.value.id)
       fetchGroups()
     }
-  } catch { /* empty */ }
+  } catch (e) {
+    console.error('移出失败:', e)
+    alert(e?.message || '移出失败')
+  }
 }
 
 async function confirmDelete(g) {

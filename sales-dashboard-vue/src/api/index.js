@@ -20,7 +20,7 @@ api.interceptors.response.use(
   res => res.data,
   err => {
     const status = err.response?.status
-    if (status === 401) {
+    if (status === 401 || status === 403) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       router.push({ name: 'login' })
