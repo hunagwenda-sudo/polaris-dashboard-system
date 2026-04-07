@@ -341,7 +341,7 @@ async function removeMember(userId) {
   if (!currentGroup.value) return
   try {
     await api.delete(`/groups/${currentGroup.value.id}/members/${userId}`)
-    if (canManage.value) { fetchUsers(); fetchGroups() }
+    if (canManage.value) { await fetchUsers(); await fetchGroups() }
     else {
       const res = await api.get(`/groups/${currentGroup.value.id}/members`)
       fetchedMembers.value = res.data || []
