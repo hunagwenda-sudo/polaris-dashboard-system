@@ -151,8 +151,12 @@ public class GroupServiceImpl implements GroupService {
         log.info("小组移除成员: userId={}", userId);
         SysUser user = userMapper.selectById(userId);
         if (user == null) throw new BusinessException("用户不存在");
-        user.setGroupId(null);
-        userMapper.updateById(user);
+        // updateById 不会更新 null 字段，需要用 UpdateWrapper
+        userMapper.update(null,
+            new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<SysUser>()
+                .eq(SysUser::getId, userId)
+                .set(SysUser::getGroupId, null)
+        );
     }
 
     @Override
