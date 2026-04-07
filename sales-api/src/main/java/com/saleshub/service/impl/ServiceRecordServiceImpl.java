@@ -38,21 +38,16 @@ public class ServiceRecordServiceImpl implements ServiceRecordService {
         if (request.getRecordDate() != null && request.getRecordDate().isAfter(LocalDate.now())) {
             throw new BusinessException("日期不能大于今天");
         }
-        for (var item : request.getItems()) {
-            var wrapper = new LambdaQueryWrapper<BizServiceRecord>()
+        // 同一人同一天只能提交一次
+        Long existing = recordMapper.selectCount(
+            new LambdaQueryWrapper<BizServiceRecord>()
                 .eq(BizServiceRecord::getUserId, userId)
                 .eq(BizServiceRecord::getRecordDate, request.getRecordDate())
-                .eq(BizServiceRecord::getPlatform, item.getPlatform())
-                .eq(BizServiceRecord::getShift, item.getShift());
-            if (item.getShopId() != null) {
-                wrapper.eq(BizServiceRecord::getShopId, item.getShopId());
-            }
-            Long count = recordMapper.selectCount(wrapper);
-            if (count > 0) {
-                String shiftLabel = "morning".equals(item.getShift()) ? "早班" : "晚班";
-                String shopLabel = item.getShopNote() != null ? " 店铺 " + item.getShopNote() : "";
-                throw new BusinessException("日期 " + request.getRecordDate() + " 平台 " + item.getPlatform() + shopLabel + " " + shiftLabel + " 已提交过");
-            }
+        );
+        if (existing > 0) {
+            throw new BusinessException(request.getRecordDate() + " 已提交过，如需修改请在客服业绩查看中编辑");
+        }
+        for (var item : request.getItems()) {
             BizServiceRecord record = new BizServiceRecord();
             record.setUserId(userId);
             record.setRecordDate(request.getRecordDate());
